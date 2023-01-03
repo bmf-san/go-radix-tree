@@ -7,45 +7,48 @@ import (
 	"strings"
 )
 
-// leafNode is used to represent a value
+// Tree is a Radix tree.
+type Tree struct {
+	root *node
+}
+
+// node is a node in tree.
+type node struct {
+	leaf     *leafNode
+	prefix   string
+	children children
+}
+
+// leafNode is the node that doesn't have a node.
 type leafNode struct {
 	key string
 	val string
 }
 
-// child is used to represent an child node
+// child is the nodes that have a node.
 type child struct {
 	label byte
 	node  *node
 }
 
-type node struct {
-	// leaf is used to store possible leaf
-	leaf *leafNode
+// children are the nodes that have a node.
+type children []child
 
-	// prefix is the common prefix we ignore
-	prefix string
-
-	// children should be stored in-order for iteration.
-	// We avoid a fully materialized slice to save memory,
-	// since in most cases we expect to be sparse
-	children children
-}
-
-func (n *node) addChild(e child) {
+// addChild adds child to a node.
+func (n *node) addChild(c child) {
 	num := len(n.children)
 	idx := sort.Search(num, func(i int) bool {
-		return n.children[i].label >= e.label
+		return n.children[i].label >= c.label
 	})
 
 	n.children = append(n.children, child{})
 	copy(n.children[idx+1:], n.children[idx:])
-	n.children[idx] = e
+	n.children[idx] = c
 }
 
+// updateChild updates a child in a node by label.
 func (n *node) updateChild(label byte, node *node) {
 	num := len(n.children)
-	// NOTE: Refactoring. this codes also used in getChild.
 	idx := sort.Search(num, func(i int) bool {
 		return n.children[i].label >= label
 	})
@@ -53,13 +56,12 @@ func (n *node) updateChild(label byte, node *node) {
 		n.children[idx].node = node
 		return
 	}
-	// TODO: change messages or return error.
 	panic("replacing missing child")
 }
 
+// getChild gets a child from a node by label.
 func (n *node) getChild(label byte) *node {
 	num := len(n.children)
-	// NOTE: Refactoring. this codes also used in updateChild.
 	idx := sort.Search(num, func(i int) bool {
 		return n.children[i].label >= label
 	})
@@ -69,24 +71,12 @@ func (n *node) getChild(label byte) *node {
 	return nil
 }
 
-type children []child
-
-// Tree implements a radix tree. This can be treated as a
-// Dictionary abstract data type. The main advantage over
-// a standard hash map is prefix-based lookups and
-// ordered iteration,
-type Tree struct {
-	root *node
-}
-
-// New returns an empty Tree
+// New creates a Tree.
 func New() *Tree {
 	return &Tree{root: &node{}}
 }
 
-// NOTE: This could probably be written differently. Try writing some test code.
-// longestPrefix finds the length of the shared prefix
-// of two strings
+// longestPrefix returns prefix length of two strings.
 func longestPrefix(k1, k2 string) int {
 	max := len(k1)
 	if l := len(k2); l < max {
@@ -101,39 +91,21 @@ func longestPrefix(k1, k2 string) int {
 	return i
 }
 
-// Insert is used to add a newentry or update
-// an existing entry. Returns true if an existing record is updated.
-func (t *Tree) Insert(s, v string) {
+// Insert inserts a key and value to tree.
+func (t *Tree) Insert(k, v string) {
 	var parent *node
 	n := t.root
-	search := s
+	search := k
 	for {
-		// NOTE: If the string to be inserted is empty, it can be an error if it is a router (return an error instead of cleanpath), so there is no need for a conditional branch here
-		// Handle key exhaution
-		if len(search) == 0 {
-			if n.leaf != nil {
-				n.leaf.val = v
-				return
-			}
-
-			n.leaf = &leafNode{
-				key: s,
-				val: v,
-			}
-			return
-		}
-
-		// Look for the child
 		parent = n
 		n = n.getChild(search[0])
 
-		// No child, create one
 		if n == nil {
 			parent.addChild(child{
 				label: search[0],
 				node: &node{
 					leaf: &leafNode{
-						key: s,
+						key: k,
 						val: v,
 					},
 					prefix: search,
@@ -142,40 +114,34 @@ func (t *Tree) Insert(s, v string) {
 			return
 		}
 
-		// Determine longest prefix of the search key on match
 		commonPrefix := longestPrefix(search, n.prefix)
 		if commonPrefix == len(n.prefix) {
 			search = search[commonPrefix:]
 			continue
 		}
 
-		// Split the node
 		spln := &node{
 			prefix: search[:commonPrefix],
 		}
 		parent.updateChild(search[0], spln)
 
-		// Restore the existing node
 		spln.addChild(child{
 			label: n.prefix[commonPrefix],
 			node:  n,
 		})
 		n.prefix = n.prefix[commonPrefix:]
 
-		// Create a new leaf node
 		leaf := &leafNode{
-			key: s,
+			key: k,
 			val: v,
 		}
 
-		// If the new key is a subset, add to this node
 		search = search[commonPrefix:]
 		if len(search) == 0 {
 			spln.leaf = leaf
 			return
 		}
 
-		// Create a new child for the node
 		spln.addChild(child{
 			label: search[0],
 			node: &node{
@@ -187,13 +153,11 @@ func (t *Tree) Insert(s, v string) {
 	}
 }
 
-// Get is used to lookup a specific key, returning
-// the value and if it was found
-func (t *Tree) Get(s string) string {
+// Get gets a value from tree by key.
+func (t *Tree) Get(k string) string {
 	n := t.root
-	search := s
+	search := k
 	for {
-		// Check for key exhaution
 		if len(search) == 0 {
 			if n.leaf != nil {
 				return n.leaf.val
@@ -201,13 +165,11 @@ func (t *Tree) Get(s string) string {
 			break
 		}
 
-		// Look for an child
 		n = n.getChild(search[0])
 		if n == nil {
 			break
 		}
 
-		// Consume the search prefix
 		if strings.HasPrefix(search, n.prefix) {
 			search = search[len(n.prefix):]
 		} else {

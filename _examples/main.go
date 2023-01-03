@@ -17,10 +17,6 @@ func main() {
 	r.Insert("/foo/bar", "v-foo/bar")
 	r.Insert("/foobar", "v-foobar")
 
-	// Find the longest prefix match
-	// m, _, _ := r.LongestPrefix("/f")
-	// fmt.Printf("%#v\n", m)
-
-	g, _ := r.Get("/foobar")
+	g := r.Get("/foobar")
 	fmt.Printf("%#v\n", g)
 }

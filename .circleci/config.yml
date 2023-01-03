@@ -51,9 +51,6 @@ jobs:
             - run:
                 name: "Run gosec"
                 command: make gosec
-            - run:
-                name: "Run benchstat"
-                command: make benchstat
       - run:
           name: Build go
           command: go build

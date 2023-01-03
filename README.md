@@ -1,8 +1,8 @@
 [![GitHub release](https://img.shields.io/github/release/bmf-san/go-radix-tree.svg)](https://github.com/bmf-san/go-radix-tree/releases)
-[![CircleCI](https://circleci.com/gh/bmf-san/go-radix-tree/tree/master.svg?style=svg)](https://circleci.com/gh/bmf-san/go-radix-tree/tree/master)
+[![CircleCI](https://circleci.com/gh/bmf-san/go-radix-tree/tree/main.svg?style=svg)](https://circleci.com/gh/bmf-san/go-radix-tree/tree/main)
 [![Go Report Card](https://goreportcard.com/badge/github.com/bmf-san/go-radix-tree)](https://goreportcard.com/report/github.com/bmf-san/go-radix-tree)
-[![codecov](https://codecov.io/gh/bmf-san/go-radix-tree/branch/master/graph/badge.svg?token=ZLOLQKUD39)](https://codecov.io/gh/bmf-san/go-radix-tree)
-[![GitHub license](https://img.shields.io/github/license/bmf-san/go-radix-tree)](https://github.com/bmf-san/go-radix-tree/blob/master/LICENSE)
+[![codecov](https://codecov.io/gh/bmf-san/go-radix-tree/branch/main/graph/badge.svg?token=ZLOLQKUD39)](https://codecov.io/gh/bmf-san/go-radix-tree)
+[![GitHub license](https://img.shields.io/github/license/bmf-san/go-radix-tree)](https://github.com/bmf-san/go-radix-tree/blob/main/LICENSE)
 [![Go Reference](https://pkg.go.dev/badge/github.com/bmf-san/go-radix-tree.svg)](https://pkg.go.dev/github.com/bmf-san/go-radix-tree)
 [![Sourcegraph](https://sourcegraph.com/github.com/bmf-san/go-radix-tree/-/badge.svg)](https://sourcegraph.com/github.com/bmf-san/go-radix-tree?badge)
 
@@ -17,7 +17,7 @@ go get -u github.com/bmf-san/go-radix-tree
 ```
 
 # Get Started
-See [_examples](https://github.com/bmf-san/go-radix-tree/blob/master/_examples).
+See [_examples](https://github.com/bmf-san/go-radix-tree/blob/main/_examples).
 
 # References
 - [github.com - armon/go-radix](https://github.com/armon/go-radix)

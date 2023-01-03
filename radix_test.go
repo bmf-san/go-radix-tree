@@ -1,408 +1,193 @@
 package radix
 
 import (
-	crand "crypto/rand"
-	"fmt"
 	"reflect"
-	"sort"
-	"strconv"
 	"testing"
 )
 
-func TestRadix(t *testing.T) {
-	var min, max string
-	inp := make(map[string]interface{})
-	for i := 0; i < 1000; i++ {
-		gen := generateUUID()
-		inp[gen] = i
-		if gen < min || i == 0 {
-			min = gen
-		}
-		if gen > max || i == 0 {
-			max = gen
-		}
+func TestAddChild(t *testing.T) {
+	tree := New()
+	var b byte
+	c := child{
+		label: b,
+		node:  &node{},
 	}
+	tree.root.addChild(c)
 
-	r := NewFromMap(inp)
-	if r.Len() != len(inp) {
-		t.Fatalf("bad length: %v %v", r.Len(), len(inp))
+	exp := c
+	act := tree.root.children[0]
+	if !reflect.DeepEqual(exp, act) {
+		t.Fatalf("expected: %v actual: %v", exp, act)
 	}
+}
 
-	r.Walk(func(k string, v interface{}) bool {
-		println(k)
-		return false
+func TestUpdateChild(t *testing.T) {
+	tree := New()
+	var b byte
+	c := child{
+		label: b,
+		node: &node{
+			prefix: "before",
+		},
+	}
+	tree.root.addChild(c)
+	var b2 byte
+	p := "after"
+	tree.root.updateChild(b2, &node{
+		prefix: p,
 	})
 
-	for k, v := range inp {
-		out, ok := r.Get(k)
-		if !ok {
-			t.Fatalf("missing key: %v", k)
-		}
-		if out != v {
-			t.Fatalf("value mis-match: %v %v", out, v)
-		}
-	}
-
-	// Check min and max
-	outMin, _, _ := r.Minimum()
-	if outMin != min {
-		t.Fatalf("bad minimum: %v %v", outMin, min)
-	}
-	outMax, _, _ := r.Maximum()
-	if outMax != max {
-		t.Fatalf("bad maximum: %v %v", outMax, max)
-	}
-
-	for k, v := range inp {
-		out, ok := r.Delete(k)
-		if !ok {
-			t.Fatalf("missing key: %v", k)
-		}
-		if out != v {
-			t.Fatalf("value mis-match: %v %v", out, v)
-		}
-	}
-	if r.Len() != 0 {
-		t.Fatalf("bad length: %v", r.Len())
+	exp := p
+	act := tree.root.children[0].node.prefix
+	if !reflect.DeepEqual(exp, act) {
+		t.Fatalf("expected: %v actual: %v", exp, act)
 	}
 }
 
-func TestRoot(t *testing.T) {
-	r := New()
-	_, ok := r.Delete("")
-	if ok {
-		t.Fatalf("bad")
+func TestGetChild(t *testing.T) {
+	tree := New()
+	var b byte
+	c := child{
+		label: b,
+		node:  &node{},
 	}
-	_, ok = r.Insert("", true)
-	if ok {
-		t.Fatalf("bad")
-	}
-	val, ok := r.Get("")
-	if !ok || val != true {
-		t.Fatalf("bad: %v", val)
-	}
-	val, ok = r.Delete("")
-	if !ok || val != true {
-		t.Fatalf("bad: %v", val)
+	tree.root.addChild(c)
+
+	exp := tree.root.children[0].node
+	act := tree.root.getChild(b)
+	if !reflect.DeepEqual(exp, act) {
+		t.Fatalf("expected: %v actual: %v", exp, act)
 	}
 }
 
-func TestDelete(t *testing.T) {
-
-	r := New()
-
-	s := []string{"", "A", "AB"}
-
-	for _, ss := range s {
-		r.Insert(ss, true)
-	}
-
-	for _, ss := range s {
-		_, ok := r.Delete(ss)
-		if !ok {
-			t.Fatalf("bad %q", ss)
-		}
+func TestNew(t *testing.T) {
+	exp := New()
+	act := &Tree{root: &node{}}
+	if !reflect.DeepEqual(exp, act) {
+		t.Fatalf("expected: %v actual: %v", exp, act)
 	}
 }
 
-func TestDeletePrefix(t *testing.T) {
-	type exp struct {
-		inp        []string
-		prefix     string
-		out        []string
-		numDeleted int
+func TestInsertAndGet(t *testing.T) {
+	items := []struct {
+		key string
+		val string
+	}{
+		{
+			key: "root",
+			val: "1",
+		},
+		{
+			key: "slow",
+			val: "2",
+		},
+		{
+			key: "slower",
+			val: "3",
+		},
+		{
+			key: "waste",
+			val: "4",
+		},
+		{
+			key: "water",
+			val: "5",
+		},
+		{
+			key: "watch",
+			val: "6",
+		},
+		{
+			key: "watcher",
+			val: "7",
+		},
 	}
-
-	cases := []exp{
-		{[]string{"", "A", "AB", "ABC", "R", "S"}, "A", []string{"", "R", "S"}, 3},
-		{[]string{"", "A", "AB", "ABC", "R", "S"}, "ABC", []string{"", "A", "AB", "R", "S"}, 1},
-		{[]string{"", "A", "AB", "ABC", "R", "S"}, "", []string{}, 6},
-		{[]string{"", "A", "AB", "ABC", "R", "S"}, "S", []string{"", "A", "AB", "ABC", "R"}, 1},
-		{[]string{"", "A", "AB", "ABC", "R", "S"}, "SS", []string{"", "A", "AB", "ABC", "R", "S"}, 0},
+	tree := New()
+	for _, i := range items {
+		tree.Insert(i.key, i.val)
 	}
-
-	for _, test := range cases {
-		r := New()
-		for _, ss := range test.inp {
-			r.Insert(ss, true)
-		}
-
-		deleted := r.DeletePrefix(test.prefix)
-		if deleted != test.numDeleted {
-			t.Fatalf("Bad delete, expected %v to be deleted but got %v", test.numDeleted, deleted)
-		}
-
-		out := []string{}
-		fn := func(s string, v interface{}) bool {
-			out = append(out, s)
-			return false
-		}
-		r.Walk(fn)
-
-		if !reflect.DeepEqual(out, test.out) {
-			t.Fatalf("mis-match: %v %v", out, test.out)
+	cases := []struct {
+		key    string
+		expVal string
+	}{
+		{
+			key:    "root",
+			expVal: "1",
+		},
+		{
+			key:    "slow",
+			expVal: "2",
+		},
+		{
+			key:    "slower",
+			expVal: "3",
+		},
+		{
+			key:    "waste",
+			expVal: "4",
+		},
+		{
+			key:    "water",
+			expVal: "5",
+		},
+		{
+			key:    "watch",
+			expVal: "6",
+		},
+		{
+			key:    "watcher",
+			expVal: "7",
+		},
+	}
+	for _, c := range cases {
+		exp := c.expVal
+		act := tree.Get(c.key)
+		if exp != act {
+			t.Fatalf("expected: %v actual: %v", exp, act)
 		}
 	}
 }
 
 func TestLongestPrefix(t *testing.T) {
-	r := New()
-
-	keys := []string{
-		"",
-		"foo",
-		"foobar",
-		"foobarbaz",
-		"foobarbazzip",
-		"foozip",
+	cases := []struct {
+		k1  string
+		k2  string
+		exp int
+	}{
+		{
+			k1:  "f",
+			k2:  "foo",
+			exp: 1,
+		},
+		{
+			k1:  "foo",
+			k2:  "foo",
+			exp: 3,
+		},
+		{
+			k1:  "foo",
+			k2:  "bar",
+			exp: 0,
+		},
+		{
+			k1:  "foo",
+			k2:  "fooo",
+			exp: 3,
+		},
 	}
-	for _, k := range keys {
-		r.Insert(k, nil)
-	}
-	if r.Len() != len(keys) {
-		t.Fatalf("bad len: %v %v", r.Len(), len(keys))
-	}
-
-	type exp struct {
-		inp string
-		out string
-	}
-	cases := []exp{
-		{"a", ""},
-		{"abc", ""},
-		{"fo", ""},
-		{"foo", "foo"},
-		{"foob", "foo"},
-		{"foobar", "foobar"},
-		{"foobarba", "foobar"},
-		{"foobarbaz", "foobarbaz"},
-		{"foobarbazzi", "foobarbaz"},
-		{"foobarbazzip", "foobarbazzip"},
-		{"foozi", "foo"},
-		{"foozip", "foozip"},
-		{"foozipzap", "foozip"},
-	}
-	for _, test := range cases {
-		m, _, ok := r.LongestPrefix(test.inp)
-		if !ok {
-			t.Fatalf("no match: %v", test)
-		}
-		if m != test.out {
-			t.Fatalf("mis-match: %v %v", m, test)
+	for _, c := range cases {
+		exp := c.exp
+		act := longestPrefix(c.k1, c.k2)
+		if exp != act {
+			t.Fatalf("expected: %v actual: %v", exp, act)
 		}
 	}
-}
-
-func TestWalkPrefix(t *testing.T) {
-	r := New()
-
-	keys := []string{
-		"foobar",
-		"foo/bar/baz",
-		"foo/baz/bar",
-		"foo/zip/zap",
-		"zipzap",
-	}
-	for _, k := range keys {
-		r.Insert(k, nil)
-	}
-	if r.Len() != len(keys) {
-		t.Fatalf("bad len: %v %v", r.Len(), len(keys))
-	}
-
-	type exp struct {
-		inp string
-		out []string
-	}
-	cases := []exp{
-		{
-			"f",
-			[]string{"foobar", "foo/bar/baz", "foo/baz/bar", "foo/zip/zap"},
-		},
-		{
-			"foo",
-			[]string{"foobar", "foo/bar/baz", "foo/baz/bar", "foo/zip/zap"},
-		},
-		{
-			"foob",
-			[]string{"foobar"},
-		},
-		{
-			"foo/",
-			[]string{"foo/bar/baz", "foo/baz/bar", "foo/zip/zap"},
-		},
-		{
-			"foo/b",
-			[]string{"foo/bar/baz", "foo/baz/bar"},
-		},
-		{
-			"foo/ba",
-			[]string{"foo/bar/baz", "foo/baz/bar"},
-		},
-		{
-			"foo/bar",
-			[]string{"foo/bar/baz"},
-		},
-		{
-			"foo/bar/baz",
-			[]string{"foo/bar/baz"},
-		},
-		{
-			"foo/bar/bazoo",
-			[]string{},
-		},
-		{
-			"z",
-			[]string{"zipzap"},
-		},
-	}
-
-	for _, test := range cases {
-		out := []string{}
-		fn := func(s string, v interface{}) bool {
-			out = append(out, s)
-			return false
-		}
-		r.WalkPrefix(test.inp, fn)
-		sort.Strings(out)
-		sort.Strings(test.out)
-		if !reflect.DeepEqual(out, test.out) {
-			t.Fatalf("mis-match: %v %v", out, test.out)
-		}
-	}
-}
-
-func TestWalkPath(t *testing.T) {
-	r := New()
-
-	keys := []string{
-		"foo",
-		"foo/bar",
-		"foo/bar/baz",
-		"foo/baz/bar",
-		"foo/zip/zap",
-		"zipzap",
-	}
-	for _, k := range keys {
-		r.Insert(k, nil)
-	}
-	if r.Len() != len(keys) {
-		t.Fatalf("bad len: %v %v", r.Len(), len(keys))
-	}
-
-	type exp struct {
-		inp string
-		out []string
-	}
-	cases := []exp{
-		{
-			"f",
-			[]string{},
-		},
-		{
-			"foo",
-			[]string{"foo"},
-		},
-		{
-			"foo/",
-			[]string{"foo"},
-		},
-		{
-			"foo/ba",
-			[]string{"foo"},
-		},
-		{
-			"foo/bar",
-			[]string{"foo", "foo/bar"},
-		},
-		{
-			"foo/bar/baz",
-			[]string{"foo", "foo/bar", "foo/bar/baz"},
-		},
-		{
-			"foo/bar/bazoo",
-			[]string{"foo", "foo/bar", "foo/bar/baz"},
-		},
-		{
-			"z",
-			[]string{},
-		},
-	}
-
-	for _, test := range cases {
-		out := []string{}
-		fn := func(s string, v interface{}) bool {
-			out = append(out, s)
-			return false
-		}
-		r.WalkPath(test.inp, fn)
-		sort.Strings(out)
-		sort.Strings(test.out)
-		if !reflect.DeepEqual(out, test.out) {
-			t.Fatalf("mis-match: %v %v", out, test.out)
-		}
-	}
-}
-
-func TestWalkDelete(t *testing.T) {
-	r := New()
-	r.Insert("init0/0", nil)
-	r.Insert("init0/1", nil)
-	r.Insert("init0/2", nil)
-	r.Insert("init0/3", nil)
-	r.Insert("init1/0", nil)
-	r.Insert("init1/1", nil)
-	r.Insert("init1/2", nil)
-	r.Insert("init1/3", nil)
-	r.Insert("init2", nil)
-
-	deleteFn := func(s string, v interface{}) bool {
-		r.Delete(s)
-		return false
-	}
-
-	r.WalkPrefix("init1", deleteFn)
-
-	for _, s := range []string{"init0/0", "init0/1", "init0/2", "init0/3", "init2"} {
-		if _, ok := r.Get(s); !ok {
-			t.Fatalf("expecting to still find %q", s)
-		}
-	}
-	if n := r.Len(); n != 5 {
-		t.Fatalf("expected to find exactly 5 nodes, instead found %d: %v", n, r.ToMap())
-	}
-
-	r.Walk(deleteFn)
-	if n := r.Len(); n != 0 {
-		t.Fatalf("expected to find exactly 0 nodes, instead found %d: %v", n, r.ToMap())
-	}
-}
-
-// generateUUID is used to generate a random UUID
-func generateUUID() string {
-	buf := make([]byte, 16)
-	if _, err := crand.Read(buf); err != nil {
-		panic(fmt.Errorf("failed to read random bytes: %v", err))
-	}
-
-	return fmt.Sprintf("%08x-%04x-%04x-%04x-%12x",
-		buf[0:4],
-		buf[4:6],
-		buf[6:8],
-		buf[8:10],
-		buf[10:16])
 }
 
 func BenchmarkInsert(b *testing.B) {
 	r := New()
-	for i := 0; i < 10000; i++ {
-		r.Insert(fmt.Sprintf("init%d", i), true)
-	}
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		_, updated := r.Insert(strconv.Itoa(n), true)
-		if updated {
-			b.Fatal("bad")
-		}
+		r.Insert("key", "value")
 	}
 }
