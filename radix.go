@@ -33,10 +33,6 @@ type node struct {
 	edges edges
 }
 
-func (n *node) isLeaf() bool {
-	return n.leaf != nil
-}
-
 func (n *node) addEdge(e edge) {
 	num := len(n.edges)
 	idx := sort.Search(num, func(i int) bool {
@@ -134,7 +130,7 @@ func (t *Tree) Insert(s, v string) {
 		// NOTE: If the string to be inserted is empty, it can be an error if it is a router (return an error instead of cleanpath), so there is no need for a conditional branch here
 		// Handle key exhaution
 		if len(search) == 0 {
-			if n.isLeaf() {
+			if n.leaf != nil {
 				n.leaf.val = v
 				return
 			}
@@ -218,7 +214,7 @@ func (t *Tree) Get(s string) string {
 	for {
 		// Check for key exhaution
 		if len(search) == 0 {
-			if n.isLeaf() {
+			if n.leaf != nil {
 				return n.leaf.val
 			}
 			break
