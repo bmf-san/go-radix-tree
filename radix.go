@@ -7,11 +7,6 @@ import (
 	"strings"
 )
 
-// WalkFn is used when walking the tree. Takes a
-// key and value, returning if iteration should
-// be terminated.
-type WalkFn func(s string, v interface{}) bool
-
 // leafNode is used to represent a value
 type leafNode struct {
 	key string
