@@ -105,8 +105,6 @@ func (e edges) Sort() {
 // ordered iteration,
 type Tree struct {
 	root *node
-	// NOTE: no needs to use HTTP router, so delete it.
-	size int
 }
 
 // New returns an empty Tree
@@ -123,11 +121,6 @@ func NewFromMap(m map[string]interface{}) *Tree {
 		t.Insert(k, v)
 	}
 	return t
-}
-
-// Len is used to return the number of elements in the tree
-func (t *Tree) Len() int {
-	return t.size
 }
 
 // NOTE: This could probably be written differently. Try writing some test code.
@@ -169,7 +162,6 @@ func (t *Tree) Insert(s string, v interface{}) (interface{}, bool) {
 				key: s,
 				val: v,
 			}
-			t.size++
 			return nil, false
 		}
 
@@ -191,7 +183,6 @@ func (t *Tree) Insert(s string, v interface{}) (interface{}, bool) {
 				},
 			}
 			parent.addEdge(e)
-			t.size++
 			return nil, false
 		}
 
@@ -203,7 +194,6 @@ func (t *Tree) Insert(s string, v interface{}) (interface{}, bool) {
 		}
 
 		// Split the node
-		t.size++
 		child := &node{
 			prefix: search[:commonPrefix],
 		}
