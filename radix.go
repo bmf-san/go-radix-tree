@@ -13,8 +13,8 @@ type leafNode struct {
 	val string
 }
 
-// edge is used to represent an edge node
-type edge struct {
+// child is used to represent an child node
+type child struct {
 	label byte
 	node  *node
 }
@@ -26,67 +26,66 @@ type node struct {
 	// prefix is the common prefix we ignore
 	prefix string
 
-	// NOTE: It's better "children" then edges.
-	// Edges should be stored in-order for iteration.
+	// children should be stored in-order for iteration.
 	// We avoid a fully materialized slice to save memory,
 	// since in most cases we expect to be sparse
-	edges edges
+	children children
 }
 
-func (n *node) addEdge(e edge) {
-	num := len(n.edges)
+func (n *node) addChild(e child) {
+	num := len(n.children)
 	idx := sort.Search(num, func(i int) bool {
-		return n.edges[i].label >= e.label
+		return n.children[i].label >= e.label
 	})
 
-	n.edges = append(n.edges, edge{})
-	copy(n.edges[idx+1:], n.edges[idx:])
-	n.edges[idx] = e
+	n.children = append(n.children, child{})
+	copy(n.children[idx+1:], n.children[idx:])
+	n.children[idx] = e
 }
 
-func (n *node) updateEdge(label byte, node *node) {
+func (n *node) updateChild(label byte, node *node) {
 	// TODO: Read later
-	num := len(n.edges)
-	// NOTE: Refactoring. this codes also used in getEdge.
+	num := len(n.children)
+	// NOTE: Refactoring. this codes also used in getChild.
 	idx := sort.Search(num, func(i int) bool {
-		return n.edges[i].label >= label
+		return n.children[i].label >= label
 	})
-	if idx < num && n.edges[idx].label == label {
-		n.edges[idx].node = node
+	if idx < num && n.children[idx].label == label {
+		n.children[idx].node = node
 		return
 	}
 	// TODO: change messages or return error.
-	panic("replacing missing edge")
+	panic("replacing missing child")
 }
 
-func (n *node) getEdge(label byte) *node {
+func (n *node) getChild(label byte) *node {
 	// TODO: Read later
-	num := len(n.edges)
-	// NOTE: Refactoring. this codes also used in updateEdge.
+	num := len(n.children)
+	// NOTE: Refactoring. this codes also used in updateChild.
 	idx := sort.Search(num, func(i int) bool {
-		return n.edges[i].label >= label
+		return n.children[i].label >= label
 	})
-	if idx < num && n.edges[idx].label == label {
-		return n.edges[idx].node
+	if idx < num && n.children[idx].label == label {
+		return n.children[idx].node
 	}
 	return nil
 }
 
-type edges []edge
+type children []child
 
-func (e edges) Len() int {
+func (e children) Len() int {
 	return len(e)
 }
 
-func (e edges) Less(i, j int) bool {
+func (e children) Less(i, j int) bool {
 	return e[i].label < e[j].label
 }
 
-func (e edges) Swap(i, j int) {
+func (e children) Swap(i, j int) {
 	e[i], e[j] = e[j], e[i]
 }
 
-func (e edges) Sort() {
+func (e children) Sort() {
 	sort.Sort(e)
 }
 
@@ -142,13 +141,13 @@ func (t *Tree) Insert(s, v string) {
 			return
 		}
 
-		// Look for the edge
+		// Look for the child
 		parent = n
-		n = n.getEdge(search[0])
+		n = n.getChild(search[0])
 
-		// No edge, create one
+		// No child, create one
 		if n == nil {
-			parent.addEdge(edge{
+			parent.addChild(child{
 				label: search[0],
 				node: &node{
 					leaf: &leafNode{
@@ -169,13 +168,13 @@ func (t *Tree) Insert(s, v string) {
 		}
 
 		// Split the node
-		child := &node{
+		spln := &node{
 			prefix: search[:commonPrefix],
 		}
-		parent.updateEdge(search[0], child)
+		parent.updateChild(search[0], spln)
 
 		// Restore the existing node
-		child.addEdge(edge{
+		spln.addChild(child{
 			label: n.prefix[commonPrefix],
 			node:  n,
 		})
@@ -190,12 +189,12 @@ func (t *Tree) Insert(s, v string) {
 		// If the new key is a subset, add to this node
 		search = search[commonPrefix:]
 		if len(search) == 0 {
-			child.leaf = leaf
+			spln.leaf = leaf
 			return
 		}
 
-		// Create a new edge for the node
-		child.addEdge(edge{
+		// Create a new child for the node
+		spln.addChild(child{
 			label: search[0],
 			node: &node{
 				leaf:   leaf,
@@ -220,8 +219,8 @@ func (t *Tree) Get(s string) string {
 			break
 		}
 
-		// Look for an edge
-		n = n.getEdge(search[0])
+		// Look for an child
+		n = n.getChild(search[0])
 		if n == nil {
 			break
 		}
