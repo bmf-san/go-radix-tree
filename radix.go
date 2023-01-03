@@ -10,7 +10,7 @@ import (
 // leafNode is used to represent a value
 type leafNode struct {
 	key string
-	val interface{}
+	val string
 }
 
 // edge is used to represent an edge node
@@ -126,7 +126,7 @@ func longestPrefix(k1, k2 string) int {
 
 // Insert is used to add a newentry or update
 // an existing entry. Returns true if an existing record is updated.
-func (t *Tree) Insert(s string, v interface{}) {
+func (t *Tree) Insert(s, v string) {
 	var parent *node
 	n := t.root
 	search := s
@@ -210,17 +210,16 @@ func (t *Tree) Insert(s string, v interface{}) {
 	}
 }
 
-// NOTE: It is assumed that the HTTP router returns handler, parameter, and error.
 // Get is used to lookup a specific key, returning
 // the value and if it was found
-func (t *Tree) Get(s string) (interface{}, bool) {
+func (t *Tree) Get(s string) string {
 	n := t.root
 	search := s
 	for {
 		// Check for key exhaution
 		if len(search) == 0 {
 			if n.isLeaf() {
-				return n.leaf.val, true
+				return n.leaf.val
 			}
 			break
 		}
@@ -238,5 +237,5 @@ func (t *Tree) Get(s string) (interface{}, bool) {
 			break
 		}
 	}
-	return nil, false
+	return ""
 }
