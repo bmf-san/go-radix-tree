@@ -71,22 +71,6 @@ func (n *node) getChild(label byte) *node {
 
 type children []child
 
-func (e children) Len() int {
-	return len(e)
-}
-
-func (e children) Less(i, j int) bool {
-	return e[i].label < e[j].label
-}
-
-func (e children) Swap(i, j int) {
-	e[i], e[j] = e[j], e[i]
-}
-
-func (e children) Sort() {
-	sort.Sort(e)
-}
-
 // Tree implements a radix tree. This can be treated as a
 // Dictionary abstract data type. The main advantage over
 // a standard hash map is prefix-based lookups and
