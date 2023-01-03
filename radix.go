@@ -109,18 +109,7 @@ type Tree struct {
 
 // New returns an empty Tree
 func New() *Tree {
-	return NewFromMap(nil)
-}
-
-// NOTE: This argument seems unnecessary for HTTP router.
-// NewFromMap returns a new tree containing the keys
-// from an existing map
-func NewFromMap(m map[string]interface{}) *Tree {
-	t := &Tree{root: &node{}}
-	for k, v := range m {
-		t.Insert(k, v)
-	}
-	return t
+	return &Tree{root: &node{}}
 }
 
 // NOTE: This could probably be written differently. Try writing some test code.
