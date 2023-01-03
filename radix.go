@@ -44,7 +44,6 @@ func (n *node) addChild(e child) {
 }
 
 func (n *node) updateChild(label byte, node *node) {
-	// TODO: Read later
 	num := len(n.children)
 	// NOTE: Refactoring. this codes also used in getChild.
 	idx := sort.Search(num, func(i int) bool {
@@ -59,7 +58,6 @@ func (n *node) updateChild(label byte, node *node) {
 }
 
 func (n *node) getChild(label byte) *node {
-	// TODO: Read later
 	num := len(n.children)
 	// NOTE: Refactoring. this codes also used in updateChild.
 	idx := sort.Search(num, func(i int) bool {
