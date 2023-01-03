@@ -129,10 +129,9 @@ func longestPrefix(k1, k2 string) int {
 	return i
 }
 
-// NOTE: This returning values seems unnecessary for HTTP router.
 // Insert is used to add a newentry or update
 // an existing entry. Returns true if an existing record is updated.
-func (t *Tree) Insert(s string, v interface{}) (interface{}, bool) {
+func (t *Tree) Insert(s string, v interface{}) {
 	var parent *node
 	n := t.root
 	search := s
@@ -141,17 +140,15 @@ func (t *Tree) Insert(s string, v interface{}) (interface{}, bool) {
 		// Handle key exhaution
 		if len(search) == 0 {
 			if n.isLeaf() {
-				// NOTE: 戻り値不要なのでoldはいらない
-				old := n.leaf.val
 				n.leaf.val = v
-				return old, true
+				return
 			}
 
 			n.leaf = &leafNode{
 				key: s,
 				val: v,
 			}
-			return nil, false
+			return
 		}
 
 		// Look for the edge
@@ -160,8 +157,7 @@ func (t *Tree) Insert(s string, v interface{}) (interface{}, bool) {
 
 		// No edge, create one
 		if n == nil {
-			// NOTE: There seems to be little need to define e.
-			e := edge{
+			parent.addEdge(edge{
 				label: search[0],
 				node: &node{
 					leaf: &leafNode{
@@ -170,9 +166,8 @@ func (t *Tree) Insert(s string, v interface{}) (interface{}, bool) {
 					},
 					prefix: search,
 				},
-			}
-			parent.addEdge(e)
-			return nil, false
+			})
+			return
 		}
 
 		// Determine longest prefix of the search key on match
@@ -205,7 +200,7 @@ func (t *Tree) Insert(s string, v interface{}) (interface{}, bool) {
 		search = search[commonPrefix:]
 		if len(search) == 0 {
 			child.leaf = leaf
-			return nil, false
+			return
 		}
 
 		// Create a new edge for the node
@@ -216,7 +211,7 @@ func (t *Tree) Insert(s string, v interface{}) (interface{}, bool) {
 				prefix: search,
 			},
 		})
-		return nil, false
+		return
 	}
 }
 
