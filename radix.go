@@ -95,6 +95,11 @@ func longestPrefix(k1, k2 string) int {
 	return i
 }
 
+// TODO:
+// /foo/:bar
+// /foo/:ba
+// のようなパスパラメータでprefix（スプリット）してしまうパターンを避けるようにする必要がありそう。
+// パスパラメータであるnodeは正規表現のsyntaxも保持する必要がありそう？（正規表現が定義されたnodeを通る場合は、正規表現が必ず利用される）
 // Insert inserts a key and value to tree.
 func (t *Tree) Insert(k, v string) {
 	var parent *node

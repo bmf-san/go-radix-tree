@@ -174,6 +174,11 @@ func TestInsertAndGetForHTTPRouter(t *testing.T) {
 			val: "5",
 		},
 		{
+			// TODO: 正規表現がある場合は正規表現を考慮する必要がある
+			key: `/foo/:bar[^\D+$]`,
+			val: "5-reg",
+		},
+		{
 			// TODO: routerの仕様としてこれをどう扱うか？ 先勝ちにするか、そもそも登録できないしようにするか。TestInsertAndGetForHTTPRouter
 			// 登録できないよう仕様にするほうが安全な気がする
 			key: "/foo/:ba",
@@ -186,6 +191,11 @@ func TestInsertAndGetForHTTPRouter(t *testing.T) {
 		{
 			key: "/foo/:bar/baz",
 			val: "7",
+		},
+		{
+			// NOTE: 上書きされるだけ?
+			key: "/foo/:bar/baz",
+			val: "7-x",
 		},
 		{
 			key: "/bar",
@@ -222,6 +232,11 @@ func TestInsertAndGetForHTTPRouter(t *testing.T) {
 			expVal: "5",
 		},
 		{
+			// /foo/one
+			key:    `/foo/:bar[^\D+$]`,
+			expVal: "5-reg",
+		},
+		{
 			// /foo/1
 			key:    "/foo/:ba",
 			expVal: "9",
@@ -235,6 +250,11 @@ func TestInsertAndGetForHTTPRouter(t *testing.T) {
 			// /foo/1/baz
 			key:    "/foo/:bar/baz",
 			expVal: "7",
+		},
+		{
+			// /foo/1/baz
+			key:    "/foo/:bar/baz",
+			expVal: "7-x",
 		},
 		{
 			// /bar
