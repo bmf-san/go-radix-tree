@@ -5,7 +5,11 @@ package radix
 import (
 	"sort"
 	"strings"
+	"sync"
 )
+
+// paramsPool is a pool for parameters
+var paramsPool sync.Pool
 
 // Tree is a Radix tree.
 type Tree struct {
