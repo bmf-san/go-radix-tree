@@ -148,6 +148,109 @@ func TestInsertAndGet(t *testing.T) {
 	}
 }
 
+func TestInsertAndGetForHTTPRouter(t *testing.T) {
+	items := []struct {
+		key string
+		val string
+	}{
+		{
+			key: "/",
+			val: "1",
+		},
+		{
+			key: "/foo",
+			val: "2",
+		},
+		{
+			key: "/foo/bar",
+			val: "3",
+		},
+		{
+			key: "/foo/bar/baz",
+			val: "4",
+		},
+		{
+			key: "/foo/:bar",
+			val: "5",
+		},
+		{
+			// TODO: routerの仕様としてこれをどう扱うか？ 先勝ちにするか、そもそも登録できないしようにするか。TestInsertAndGetForHTTPRouter
+			// 登録できないよう仕様にするほうが安全な気がする
+			key: "/foo/:ba",
+			val: "9",
+		},
+		{
+			key: "/foo/bar/:baz",
+			val: "6",
+		},
+		{
+			key: "/foo/:bar/baz",
+			val: "7",
+		},
+		{
+			key: "/bar",
+			val: "8",
+		},
+	}
+	tree := New()
+	for _, i := range items {
+		tree.Insert(i.key, i.val)
+	}
+	cases := []struct {
+		key    string
+		expVal string
+	}{
+		{
+			key:    "/",
+			expVal: "1",
+		},
+		{
+			key:    "/foo",
+			expVal: "2",
+		},
+		{
+			key:    "/foo/bar",
+			expVal: "3",
+		},
+		{
+			key:    "/foo/bar/baz",
+			expVal: "4",
+		},
+		{
+			// /foo/1
+			key:    "/foo/:bar",
+			expVal: "5",
+		},
+		{
+			// /foo/1
+			key:    "/foo/:ba",
+			expVal: "9",
+		},
+		{
+			// /foo/bar/1
+			key:    "/foo/bar/:baz",
+			expVal: "6",
+		},
+		{
+			// /foo/1/baz
+			key:    "/foo/:bar/baz",
+			expVal: "7",
+		},
+		{
+			// /bar
+			key:    "/bar",
+			expVal: "8",
+		},
+	}
+	for _, c := range cases {
+		exp := c.expVal
+		act := tree.Get(c.key)
+		if exp != act {
+			t.Fatalf("expected: %v actual: %v", exp, act)
+		}
+	}
+}
+
 func TestLongestPrefix(t *testing.T) {
 	cases := []struct {
 		k1  string
