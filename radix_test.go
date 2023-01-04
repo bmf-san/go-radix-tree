@@ -173,17 +173,18 @@ func TestInsertAndGetForHTTPRouter(t *testing.T) {
 			key: "/foo/:bar",
 			val: "5",
 		},
-		{
-			// TODO: 正規表現がある場合は正規表現を考慮する必要がある
-			key: `/foo/:bar[^\D+$]`,
-			val: "5-reg",
-		},
-		{
-			// TODO: routerの仕様としてこれをどう扱うか？ 先勝ちにするか、そもそも登録できないしようにするか。TestInsertAndGetForHTTPRouter
-			// 登録できないよう仕様にするほうが安全な気がする
-			key: "/foo/:ba",
-			val: "9",
-		},
+		// {
+		// 	// TODO: routerの仕様としてこれをどう扱うか？ 先勝ちにするか、そもそも登録できないしようにするか。TestInsertAndGetForHTTPRouter
+		// 	// 登録できないよう仕様にするほうが安全な気がする
+		// 	key: "/foo/:ba",
+		// 	val: "9",
+		// },
+		// TODO: path paramが対応できてから対応する
+		// {
+		// 	// TODO: 正規表現がある場合は正規表現を考慮する必要があるj
+		// 	key: `/foo/:bar[^\D+$]`,
+		// 	val: "5-reg",
+		// },
 		{
 			key: "/foo/bar/:baz",
 			val: "6",
@@ -192,14 +193,31 @@ func TestInsertAndGetForHTTPRouter(t *testing.T) {
 			key: "/foo/:bar/baz",
 			val: "7",
 		},
-		{
-			// NOTE: 上書きされるだけ?
-			key: "/foo/:bar/baz",
-			val: "7-x",
-		},
+		// {
+		// 	// NOTE: 上書きしないでpanicにする。これは無駄な登録なので、そのほうが安全そう
+		// 	// NOTE: →上書きできないようにした
+		// 	key: "/foo/:bar/baz",
+		// 	val: "7-x",
+		// },
 		{
 			key: "/bar",
 			val: "8",
+		},
+		{
+			key: "/baz/caz",
+			val: "10",
+		},
+		{
+			key: "/baz/cat",
+			val: "11",
+		},
+		{
+			key: "/a/b/c/:d/:e/:f",
+			val: "12",
+		},
+		{
+			key: "/a/b/c/:d/:e",
+			val: "13",
 		},
 	}
 	tree := New()
@@ -207,63 +225,78 @@ func TestInsertAndGetForHTTPRouter(t *testing.T) {
 		tree.Insert(i.key, i.val)
 	}
 	cases := []struct {
-		key    string
-		expVal string
+		key string
+		val string
 	}{
 		{
-			key:    "/",
-			expVal: "1",
+			key: "/",
+			val: "1",
 		},
 		{
-			key:    "/foo",
-			expVal: "2",
+			key: "/foo",
+			val: "2",
 		},
 		{
-			key:    "/foo/bar",
-			expVal: "3",
+			key: "/foo/bar",
+			val: "3",
 		},
 		{
-			key:    "/foo/bar/baz",
-			expVal: "4",
+			key: "/foo/bar/baz",
+			val: "4",
 		},
 		{
-			// /foo/1
-			key:    "/foo/:bar",
-			expVal: "5",
+			key: "/foo/path-param-bar",
+			val: "5",
+		},
+		// {
+		// 	// TODO: routerの仕様としてこれをどう扱うか？ 先勝ちにするか、そもそも登録できないしようにするか。TestInsertAndGetForHTTPRouter
+		// 	// 登録できないよう仕様にするほうが安全な気がする
+		// 	key: "/foo/:ba",
+		// 	val: "9",
+		// },
+		// TODO: path paramが対応できてから対応する
+		// {
+		// 	// TODO: 正規表現がある場合は正規表現を考慮する必要があるj
+		// 	key: `/foo/:bar[^\D+$]`,
+		// 	val: "5-reg",
+		// },
+		{
+			key: "/foo/bar/path-param-baz",
+			val: "6",
 		},
 		{
-			// /foo/one
-			key:    `/foo/:bar[^\D+$]`,
-			expVal: "5-reg",
+			key: "/foo/:bar/baz",
+			val: "7",
+		},
+		// {
+		// 	// NOTE: 上書きしないでpanicにする。これは無駄な登録なので、そのほうが安全そう
+		// 	// NOTE: →上書きできないようにした
+		// 	key: "/foo/:bar/baz",
+		// 	val: "7-x",
+		// },
+		{
+			key: "/bar",
+			val: "8",
 		},
 		{
-			// /foo/1
-			key:    "/foo/:ba",
-			expVal: "9",
+			key: "/baz/caz",
+			val: "10",
 		},
 		{
-			// /foo/bar/1
-			key:    "/foo/bar/:baz",
-			expVal: "6",
+			key: "/baz/cat",
+			val: "11",
 		},
 		{
-			// /foo/1/baz
-			key:    "/foo/:bar/baz",
-			expVal: "7",
+			key: "/a/b/c/path-param-d/path-param-e/path-param-f",
+			val: "12",
 		},
 		{
-			// /foo/1/baz
-			key:    "/foo/:bar/baz",
-			expVal: "7-x",
-		},
-		{
-			// /bar
-			key:    "/bar",
-			expVal: "8",
+			key: "/a/b/c/path-param-d/path-param-e",
+			val: "13",
 		},
 	}
 	for _, c := range cases {
-		exp := c.expVal
+		exp := c.val
 		act := tree.Get(c.key)
 		if exp != act {
 			t.Fatalf("expected: %v actual: %v", exp, act)
@@ -303,6 +336,30 @@ func TestLongestPrefix(t *testing.T) {
 		act := longestPrefix(c.k1, c.k2)
 		if exp != act {
 			t.Fatalf("expected: %v actual: %v", exp, act)
+		}
+	}
+}
+
+func TestGetParams(t *testing.T) {
+	// TODO: 後で調整
+	cases := []struct {
+		key string
+		exp []string
+	}{
+		{
+			key: "/foo/:bar",
+			exp: []string{"bar"},
+		},
+		{
+			key: "/foo/:bar/:baz",
+			exp: []string{"bar", "baz"},
+		},
+	}
+
+	for _, c := range cases {
+		act := getParams(c.key)
+		if !reflect.DeepEqual(act, c.exp) {
+			t.Fatalf("expected: %v actual: %v", c.exp, act)
 		}
 	}
 }

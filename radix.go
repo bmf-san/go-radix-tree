@@ -3,6 +3,7 @@
 package radix
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 	"sync"
@@ -25,8 +26,9 @@ type node struct {
 
 // leafNode is the node that doesn't have a node.
 type leafNode struct {
-	key string
-	val string
+	key       string
+	val       string
+	hasParams bool
 }
 
 // child is the nodes that have a node.
@@ -95,44 +97,47 @@ func longestPrefix(k1, k2 string) int {
 	return i
 }
 
-// TODO:
-// /foo/:bar
-// /foo/:ba
-// のようなパスパラメータでprefix（スプリット）してしまうパターンを避けるようにする必要がありそう。
-// パスパラメータであるnodeは正規表現のsyntaxも保持する必要がありそう？（正規表現が定義されたnodeを通る場合は、正規表現が必ず利用される）
 // Insert inserts a key and value to tree.
 func (t *Tree) Insert(k, v string) {
 	var parent *node
 	n := t.root
-	search := k
+	path := k
 	for {
 		parent = n
-		n = n.getChild(search[0])
+		n = n.getChild(path[0])
 
 		if n == nil {
 			parent.addChild(child{
-				label: search[0],
+				label: path[0],
 				node: &node{
 					leaf: &leafNode{
 						key: k,
 						val: v,
 					},
-					prefix: search,
+					prefix: path,
 				},
 			})
 			return
 		}
 
-		commonPrefix := longestPrefix(search, n.prefix)
+		commonPrefix := longestPrefix(path, n.prefix)
 		if commonPrefix == len(n.prefix) {
-			search = search[commonPrefix:]
+			if path == n.prefix {
+				panic(fmt.Sprintf("duplicate path registration. path: %v prefix: %v", path, n.prefix))
+			}
+			path = path[commonPrefix:]
 			continue
 		}
 
-		spln := &node{
-			prefix: search[:commonPrefix],
+		if strings.Count(path, "/") == strings.Count(n.prefix, "/") && strings.Contains(n.prefix, ":") {
+			panic(fmt.Sprintf("conflicts path parameter. path: %v prefix: %v", path, n.prefix))
+
 		}
-		parent.updateChild(search[0], spln)
+
+		spln := &node{
+			prefix: path[:commonPrefix],
+		}
+		parent.updateChild(path[0], spln)
 
 		spln.addChild(child{
 			label: n.prefix[commonPrefix],
@@ -145,17 +150,17 @@ func (t *Tree) Insert(k, v string) {
 			val: v,
 		}
 
-		search = search[commonPrefix:]
-		if len(search) == 0 {
+		path = path[commonPrefix:]
+		if len(path) == 0 {
 			spln.leaf = leaf
 			return
 		}
 
 		spln.addChild(child{
-			label: search[0],
+			label: path[0],
 			node: &node{
 				leaf:   leaf,
-				prefix: search,
+				prefix: path,
 			},
 		})
 		return
@@ -165,25 +170,31 @@ func (t *Tree) Insert(k, v string) {
 // Get gets a value from tree by key.
 func (t *Tree) Get(k string) string {
 	n := t.root
-	search := k
+	path := k
 	for {
-		if len(search) == 0 {
+		if len(path) == 0 {
 			if n.leaf != nil {
 				return n.leaf.val
 			}
 			break
 		}
 
-		n = n.getChild(search[0])
+		n = n.getChild(path[0])
 		if n == nil {
 			break
 		}
 
-		if strings.HasPrefix(search, n.prefix) {
-			search = search[len(n.prefix):]
+		if strings.HasPrefix(path, n.prefix) {
+			path = path[len(n.prefix):]
 		} else {
 			break
 		}
 	}
 	return ""
+}
+
+func getParams(k string) []string {
+	// TODO: これ不要かも
+	// /foo/:bar → []string{"bar"} みたいなparamsを抜き出す処理を書く
+	return []string{}
 }
