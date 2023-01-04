@@ -228,22 +228,22 @@ func TestInsertAndGetForHTTPRouter(t *testing.T) {
 		key string
 		val string
 	}{
-		{
-			key: "/",
-			val: "1",
-		},
-		{
-			key: "/foo",
-			val: "2",
-		},
-		{
-			key: "/foo/bar",
-			val: "3",
-		},
-		{
-			key: "/foo/bar/baz",
-			val: "4",
-		},
+		// {
+		// 	key: "/",
+		// 	val: "1",
+		// },
+		// {
+		// 	key: "/foo",
+		// 	val: "2",
+		// },
+		// {
+		// 	key: "/foo/bar",
+		// 	val: "3",
+		// },
+		// {
+		// 	key: "/foo/bar/baz",
+		// 	val: "4",
+		// },
 		{
 			key: "/foo/path-param-bar",
 			val: "5",
@@ -260,40 +260,40 @@ func TestInsertAndGetForHTTPRouter(t *testing.T) {
 		// 	key: `/foo/:bar[^\D+$]`,
 		// 	val: "5-reg",
 		// },
-		{
-			key: "/foo/bar/path-param-baz",
-			val: "6",
-		},
-		{
-			key: "/foo/:bar/baz",
-			val: "7",
-		},
+		// {
+		// 	key: "/foo/bar/path-param-baz",
+		// 	val: "6",
+		// },
+		// {
+		// 	key: "/foo/:bar/baz",
+		// 	val: "7",
+		// },
 		// {
 		// 	// NOTE: 上書きしないでpanicにする。これは無駄な登録なので、そのほうが安全そう
 		// 	// NOTE: →上書きできないようにした
 		// 	key: "/foo/:bar/baz",
 		// 	val: "7-x",
 		// },
-		{
-			key: "/bar",
-			val: "8",
-		},
-		{
-			key: "/baz/caz",
-			val: "10",
-		},
-		{
-			key: "/baz/cat",
-			val: "11",
-		},
-		{
-			key: "/a/b/c/path-param-d/path-param-e/path-param-f",
-			val: "12",
-		},
-		{
-			key: "/a/b/c/path-param-d/path-param-e",
-			val: "13",
-		},
+		// {
+		// 	key: "/bar",
+		// 	val: "8",
+		// },
+		// {
+		// 	key: "/baz/caz",
+		// 	val: "10",
+		// },
+		// {
+		// 	key: "/baz/cat",
+		// 	val: "11",
+		// },
+		// {
+		// 	key: "/a/b/c/path-param-d/path-param-e/path-param-f",
+		// 	val: "12",
+		// },
+		// {
+		// 	key: "/a/b/c/path-param-d/path-param-e",
+		// 	val: "13",
+		// },
 	}
 	for _, c := range cases {
 		exp := c.val

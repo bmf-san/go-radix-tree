@@ -6,11 +6,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-	"sync"
 )
-
-// paramsPool is a pool for parameters
-var paramsPool sync.Pool
 
 // Tree is a Radix tree.
 type Tree struct {
@@ -26,9 +22,8 @@ type node struct {
 
 // leafNode is the node that doesn't have a node.
 type leafNode struct {
-	key       string
-	val       string
-	hasParams bool
+	key string
+	val string
 }
 
 // child is the nodes that have a node.
@@ -181,6 +176,10 @@ func (t *Tree) Get(k string) string {
 
 		n = n.getChild(path[0])
 		if n == nil {
+			// TODO: 一致するParamがないか（paramのノードがないかを）探す処理（path paramと正規表現の複数ノードが想定されるので、それを考慮）
+			// nodeはleaf、prefix、children持っているので、その中を探索、適宜paramを保存
+			// 一致する&childrenがある場合はさらにchildrenも探索していく
+
 			break
 		}
 
