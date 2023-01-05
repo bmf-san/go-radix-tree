@@ -152,13 +152,15 @@ func TestInsertAndGet(t *testing.T) {
 func TestUnderstandGetChild(t *testing.T) {
 	tree := New()
 	// tree.Insert("/foo/bar", "foobar")
-	tree.Insert("/foo/:bar", "param-bar")
+	tree.Insert("/foo/:bar/baz", "param-bar")
+	// tree.Insert("/foo/:bar/:baz", "param-bar")
+	// tree.Insert("/foo/:bar", "param-bar")
 	// tree.Insert("/foo/baz", "foobaz")
 	// tree.Insert("/foo/:ba", "param-bar")
 	// tree.Insert("/foo/bazz", "foobaz")
 	pb := tree.Get("/foo/param-bar")
-	b := tree.Get("/foo/bar")
-	fmt.Printf("%#v %#v\n", pb, b)
+	// b := tree.Get("/foo/bar")
+	fmt.Printf("%#v\n", pb)
 }
 
 func TestInsertAndGetForHTTPRouter(t *testing.T) {
@@ -349,30 +351,6 @@ func TestLongestPrefix(t *testing.T) {
 		act := longestPrefix(c.k1, c.k2)
 		if exp != act {
 			t.Fatalf("expected: %v actual: %v", exp, act)
-		}
-	}
-}
-
-func TestGetParams(t *testing.T) {
-	// TODO: 後で調整
-	cases := []struct {
-		key string
-		exp []string
-	}{
-		{
-			key: "/foo/:bar",
-			exp: []string{"bar"},
-		},
-		{
-			key: "/foo/:bar/:baz",
-			exp: []string{"bar", "baz"},
-		},
-	}
-
-	for _, c := range cases {
-		act := getParams(c.key)
-		if !reflect.DeepEqual(act, c.exp) {
-			t.Fatalf("expected: %v actual: %v", c.exp, act)
 		}
 	}
 }

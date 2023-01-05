@@ -62,11 +62,6 @@ func (n *node) updateChild(label byte, node *node) {
 
 // getChild gets a child from a node by label.
 func (n *node) getChild(label byte) *node {
-	// TODO: 一致するParamがないか（paramのノードがないかを）探す処理（path paramと正規表現の複数ノードが想定されるので、それを考慮）
-	// nodeはleaf、prefix、children持っているので、その中を探索、適宜paramを保存
-	// 一致する&childrenがある場合はさらにchildrenも探索していく
-
-	// TODO: 以下の処理を完全理解する必要がある
 	num := len(n.children)
 	idx := sort.Search(num, func(i int) bool {
 		return n.children[i].label >= label
@@ -168,6 +163,9 @@ func (t *Tree) Insert(k, v string) {
 	}
 }
 
+// TODO: ここは後でsync.pool
+var parameters = map[string]string{}
+
 // Get gets a value from tree by key.
 func (t *Tree) Get(k string) string {
 	n := t.root
@@ -175,6 +173,7 @@ func (t *Tree) Get(k string) string {
 	for {
 		if len(path) == 0 {
 			if n.leaf != nil {
+				fmt.Printf("%#v\n", parameters)
 				return n.leaf.val
 			}
 			break
@@ -188,14 +187,17 @@ func (t *Tree) Get(k string) string {
 		if strings.HasPrefix(path, n.prefix) {
 			path = path[len(n.prefix):]
 		} else {
-			break
+			commonPrefix := longestPrefix(path, n.prefix)
+			param := n.prefix[commonPrefix:]
+			isParamPrefix := strings.Contains(param, ":")
+			if isParamPrefix {
+				paramPath := path[commonPrefix:]
+				parameters[param] = paramPath
+				path = path[commonPrefix+len(paramPath):]
+			} else {
+				break
+			}
 		}
 	}
 	return ""
-}
-
-func getParams(k string) []string {
-	// TODO: これ不要かも
-	// /foo/:bar → []string{"bar"} みたいなparamsを抜き出す処理を書く
-	return []string{}
 }
