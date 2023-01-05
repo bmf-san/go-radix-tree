@@ -1,6 +1,7 @@
 package radix
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -146,6 +147,18 @@ func TestInsertAndGet(t *testing.T) {
 			t.Fatalf("expected: %v actual: %v", exp, act)
 		}
 	}
+}
+
+func TestUnderstandGetChild(t *testing.T) {
+	tree := New()
+	// tree.Insert("/foo/bar", "foobar")
+	tree.Insert("/foo/:bar", "param-bar")
+	// tree.Insert("/foo/baz", "foobaz")
+	// tree.Insert("/foo/:ba", "param-bar")
+	// tree.Insert("/foo/bazz", "foobaz")
+	pb := tree.Get("/foo/param-bar")
+	b := tree.Get("/foo/bar")
+	fmt.Printf("%#v %#v\n", pb, b)
 }
 
 func TestInsertAndGetForHTTPRouter(t *testing.T) {

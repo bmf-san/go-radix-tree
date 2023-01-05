@@ -62,6 +62,11 @@ func (n *node) updateChild(label byte, node *node) {
 
 // getChild gets a child from a node by label.
 func (n *node) getChild(label byte) *node {
+	// TODO: 一致するParamがないか（paramのノードがないかを）探す処理（path paramと正規表現の複数ノードが想定されるので、それを考慮）
+	// nodeはleaf、prefix、children持っているので、その中を探索、適宜paramを保存
+	// 一致する&childrenがある場合はさらにchildrenも探索していく
+
+	// TODO: 以下の処理を完全理解する必要がある
 	num := len(n.children)
 	idx := sort.Search(num, func(i int) bool {
 		return n.children[i].label >= label
@@ -99,6 +104,9 @@ func (t *Tree) Insert(k, v string) {
 	path := k
 	for {
 		parent = n
+		if path == "" {
+			panic(fmt.Sprintf("duplicate path registration. path: %v prefix: %v", k, n.prefix))
+		}
 		n = n.getChild(path[0])
 
 		if n == nil {
@@ -117,16 +125,14 @@ func (t *Tree) Insert(k, v string) {
 
 		commonPrefix := longestPrefix(path, n.prefix)
 		if commonPrefix == len(n.prefix) {
-			if path == n.prefix {
-				panic(fmt.Sprintf("duplicate path registration. path: %v prefix: %v", path, n.prefix))
-			}
 			path = path[commonPrefix:]
 			continue
 		}
 
-		if strings.Count(path, "/") == strings.Count(n.prefix, "/") && strings.Contains(n.prefix, ":") {
-			panic(fmt.Sprintf("conflicts path parameter. path: %v prefix: %v", path, n.prefix))
-
+		if strings.Count(path, "/") == strings.Count(n.prefix, "/") {
+			if strings.Contains(path, ":") || strings.Contains(n.prefix, ":") {
+				panic(fmt.Sprintf("conflicts path parameter. path: %v prefix: %v", path, n.prefix))
+			}
 		}
 
 		spln := &node{
@@ -176,10 +182,6 @@ func (t *Tree) Get(k string) string {
 
 		n = n.getChild(path[0])
 		if n == nil {
-			// TODO: 一致するParamがないか（paramのノードがないかを）探す処理（path paramと正規表現の複数ノードが想定されるので、それを考慮）
-			// nodeはleaf、prefix、children持っているので、その中を探索、適宜paramを保存
-			// 一致する&childrenがある場合はさらにchildrenも探索していく
-
 			break
 		}
 
