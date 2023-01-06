@@ -293,6 +293,150 @@ func TestOnlyRoot(t *testing.T) {
 	}
 }
 
+func TestWithoutRootOnlyStatic(t *testing.T) {
+	cases := []struct {
+		name      string
+		key       string
+		val       string
+		getKey    string
+		expVal    string
+		expParams map[string]string
+	}{
+		{
+			name:      "static-1",
+			key:       "/foo",
+			val:       "static-1",
+			getKey:    "/foo",
+			expVal:    "static-1",
+			expParams: map[string]string{},
+		},
+		{
+			name:      "static-2",
+			key:       "/foo/bar",
+			val:       "static-2",
+			getKey:    "/foo/bar",
+			expVal:    "static-2",
+			expParams: map[string]string{},
+		},
+	}
+
+	tree := New()
+	for _, c := range cases {
+		defer func() {
+			err := recover()
+			if err != nil {
+				t.Errorf("expected no panic: %v\n", err)
+			}
+		}()
+		tree.Insert(c.key, c.val)
+	}
+	for _, c := range cases {
+		actVal := tree.Get(c.getKey)
+		if c.expVal != actVal {
+			t.Fatalf("expected: %v actual: %v", c.expVal, actVal)
+		}
+		if !reflect.DeepEqual(c.expParams, parameters) {
+			t.Fatalf("expected: %v actual: %v", c.expParams, parameters)
+		}
+	}
+}
+
+func TestWithoutRootOnlyOneParam(t *testing.T) {
+	cases := []struct {
+		name      string
+		key       string
+		val       string
+		getKey    string
+		expVal    string
+		expParams map[string]string
+	}{
+		{
+			name:      "param-1",
+			key:       "/foo/:foo",
+			val:       "param-1",
+			getKey:    "/foo/1",
+			expVal:    "param-1",
+			expParams: map[string]string{":foo": "1"},
+		},
+		// {
+		// 	name:      "param-2",
+		// 	key:       "/f/:f",
+		// 	val:       "param-2",
+		// 	getKey:    "/f/1",
+		// 	expVal:    "param-2",
+		// 	expParams: map[string]string{":f": "1"},
+		// },
+	}
+
+	tree := New()
+	for _, c := range cases {
+		defer func() {
+			err := recover()
+			if err != nil {
+				t.Errorf("expected no panic: %v\n", err)
+			}
+		}()
+		tree.Insert(c.key, c.val)
+	}
+	for _, c := range cases {
+		actVal := tree.Get(c.getKey)
+		if c.expVal != actVal {
+			t.Fatalf("expected: %v actual: %v", c.expVal, actVal)
+		}
+		if !reflect.DeepEqual(c.expParams, parameters) {
+			t.Fatalf("expected: %v actual: %v", c.expParams, parameters)
+		}
+	}
+}
+
+func TestWithoutRootOnlyTwoParam(t *testing.T) {
+	cases := []struct {
+		name      string
+		key       string
+		val       string
+		getKey    string
+		expVal    string
+		expParams map[string]string
+	}{
+		{
+			name:      "param-1",
+			key:       "/foo/:foo",
+			val:       "param-1",
+			getKey:    "/foo/1",
+			expVal:    "param-1",
+			expParams: map[string]string{":foo": "1"},
+		},
+		{
+			name:      "param-2",
+			key:       "/f/:f",
+			val:       "param-2",
+			getKey:    "/f/1",
+			expVal:    "param-2",
+			expParams: map[string]string{":f": "1"},
+		},
+	}
+
+	tree := New()
+	for _, c := range cases {
+		defer func() {
+			err := recover()
+			if err != nil {
+				t.Errorf("expected no panic: %v\n", err)
+			}
+		}()
+		tree.Insert(c.key, c.val)
+	}
+	for _, c := range cases {
+		actVal := tree.Get(c.getKey)
+		if c.expVal != actVal {
+			t.Fatalf("expected: %v actual: %v", c.expVal, actVal)
+		}
+		if !reflect.DeepEqual(c.expParams, parameters) {
+			t.Fatalf("expected: %v actual: %v", c.expParams, parameters)
+		}
+	}
+}
+
 func TestOnlyRootAndOneStatic(t *testing.T) {
 	cases := []struct {
 		name      string
@@ -407,7 +551,7 @@ func TestParamIfNotMatchStatic(t *testing.T) {
 		expParams map[string]string
 	}{
 		{
-			name:      "static-2",
+			name:      "param-2",
 			key:       "/foo/bar",
 			val:       "static-2",
 			getKey:    "/foo/bar",

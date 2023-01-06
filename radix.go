@@ -181,6 +181,13 @@ func (t *Tree) Get(k string) string {
 	var tmppx string // for parammatch
 	for {
 		var tmpn *node
+		if len(path) == 0 {
+			if n.leaf != nil {
+				// fmt.Printf("%#v\n", parameters)
+				return n.leaf.val
+			}
+			break
+		}
 		if n.getChild(path[0]) != nil {
 			n = n.getChild(path[0])
 			if n.prefix == "/" {
@@ -190,17 +197,8 @@ func (t *Tree) Get(k string) string {
 				path = path[ppcp:]
 			}
 
-			if len(path) == 0 {
-				if n.leaf != nil {
-					// fmt.Printf("%#v\n", parameters)
-					return n.leaf.val
-				}
-				break
-			}
-
 			continue
 		}
-]
 		for i := 0; i < len(n.children); i++ {
 			// prefix match
 			ncp := n.children[i].node.prefix
@@ -269,13 +267,13 @@ func (t *Tree) Get(k string) string {
 		}
 
 		// TODO: ここはforの冒頭だけで良い条件かも
-		if len(path) == 0 {
-			if n.leaf != nil {
-				// fmt.Printf("%#v\n", parameters)
-				return n.leaf.val
-			}
-			break
-		}
+		// if len(path) == 0 {
+		// 	if n.leaf != nil {
+		// 		// fmt.Printf("%#v\n", parameters)
+		// 		return n.leaf.val
+		// 	}
+		// 	break
+		// }
 	}
 	return ""
 }
