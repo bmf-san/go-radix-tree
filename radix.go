@@ -124,6 +124,7 @@ func (t *Tree) Insert(k, v string) {
 			continue
 		}
 
+		// TODO: この条件ではだめ
 		if strings.Contains(path, ":") && strings.Contains(n.prefix, ":") {
 			panic(fmt.Sprintf("conflicts path parameter. path: %v prefix: %v", path, n.prefix))
 		}
@@ -161,7 +162,7 @@ func (t *Tree) Insert(k, v string) {
 	}
 }
 
-// TODO: ここは後でsync.pool
+// TODO: ここは後でsync.pool/
 var parameters = map[string]string{}
 
 // Get gets a value from tree by key.
@@ -195,10 +196,34 @@ func (t *Tree) Get(k string) string {
 			} else {
 				ppcp := longestPrefix(path, n.prefix)
 				path = path[ppcp:]
+				tmppx = n.prefix[:ppcp]
 			}
 
 			continue
 		}
+
+		// TODO: pathがあるけどchildrenが0の場合 ≒ 最終ノードになる。
+		if len(n.children) == 0 {
+			if n.leaf != nil {
+				ep1 := explodePath(n.prefix[len(tmppx):])
+				ep2 := explodePath(path)
+				if len(ep1) != len(ep2) {
+					return ""
+				}
+				for j := 0; j < len(ep1); j++ {
+					if strings.Contains(ep1[j], ":") {
+						// TODO: /foo/:id/:id みたいにするとオーバーライドしてしまう
+						parameters[ep1[j]] = ep2[j]
+					}
+					if ep1[j] == ep2[j] {
+						continue
+					}
+				}
+				return n.leaf.val
+			}
+			return ""
+		}
+
 		for i := 0; i < len(n.children); i++ {
 			// prefix match
 			ncp := n.children[i].node.prefix
