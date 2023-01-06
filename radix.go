@@ -179,6 +179,7 @@ func (t *Tree) Get(k string) string {
 
 		var tmpn *node
 		for i := 0; i < len(n.children); i++ {
+			// TODO: 多分このへんいじってparam対応できるはず
 			if strings.HasPrefix(path, n.children[i].node.prefix) {
 				path = path[len(n.children[i].node.prefix):]
 				tmpn = n.children[i].node

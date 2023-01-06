@@ -160,7 +160,9 @@ func TestHTTPRouter(t *testing.T) {
 		hasPanic bool
 		getKeys  []string
 		expVals  []string
+		// TODO: expValsを正常系として、異常系も追加
 	}{
+		// static test cases
 		{
 			name: "only-root",
 			items: []insertItem{
@@ -307,9 +309,72 @@ func TestHTTPRouter(t *testing.T) {
 				"foobarr",
 			},
 		},
-		// TODO: panic case
-		// TODO: param case
-		// TODO: general case
+		// param test cases
+		{
+			name: "param-1",
+			items: []insertItem{
+				{
+					key: "/foo/:one",
+					val: "param-1",
+				},
+			},
+			hasPanic: false,
+			getKeys:  []string{"/foo/one"},
+			expVals:  []string{"param-1"},
+		},
+		{
+			name: "param-2",
+			items: []insertItem{
+				{
+					key: "/foo/:one/:two",
+					val: "param-2",
+				},
+			},
+			hasPanic: false,
+			getKeys:  []string{"/foo/one/two"},
+			expVals:  []string{"param-2"},
+		},
+		{
+			name: "param-3",
+			items: []insertItem{
+				{
+					key: "/foo/:one/:two/:three",
+					val: "param-3",
+				},
+			},
+			hasPanic: false,
+			getKeys:  []string{"/foo/one/two/three"},
+			expVals:  []string{"param-3"},
+		},
+		{
+			name: "param-1-middle",
+			items: []insertItem{
+				{
+					key: "/foo/:one/bar",
+					val: "param-1-middle",
+				},
+			},
+			hasPanic: false,
+			getKeys:  []string{"/foo/one/bar"},
+			expVals:  []string{"param-1-middle"},
+		},
+		{
+			name: "param-2-middle",
+			items: []insertItem{
+				{
+					key: "/foo/:one/bar/:two",
+					val: "param-2-middle",
+				},
+			},
+			hasPanic: false,
+			getKeys:  []string{"/foo/one/bar/two"},
+			expVals:  []string{"param-2-middle"},
+		},
+		// TODO: param all case
+		// panic test cases
+		// TODO: here
+		// general test cases
+		// TODO: here
 	}
 
 	for _, c := range cases {
