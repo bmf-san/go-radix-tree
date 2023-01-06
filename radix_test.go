@@ -188,7 +188,7 @@ func TestHTTPRouter(t *testing.T) {
 			items: []insertItem{
 				{
 					key: "/foo",
-					val: "/static-1",
+					val: "static-1",
 				},
 			},
 			hasPanic: false,
@@ -253,7 +253,73 @@ func TestHTTPRouter(t *testing.T) {
 				"static-3",
 			},
 		},
-		// TODO: param
+		{
+			name: "root-and-static-split-node",
+			items: []insertItem{
+				{
+					key: "/",
+					val: "root",
+				},
+				{
+					key: "/foo",
+					val: "foo",
+				},
+				{
+					key: "/fo",
+					val: "fo",
+				},
+				{
+					key: "/foz",
+					val: "foz",
+				},
+				{
+					key: "/fooo",
+					val: "fooo",
+				},
+				{
+					key: "/foo/bar",
+					val: "foobar",
+				},
+				{
+					key: "/foo/ba",
+					val: "fooba",
+				},
+				{
+					key: "/foo/baz",
+					val: "foobaz",
+				},
+				{
+					key: "/foo/barr",
+					val: "foobarr",
+				},
+			},
+			hasPanic: false,
+			getKeys: []string{
+				"/",
+				"/foo",
+				"/fo",
+				"/foz",
+				"/fooo",
+				"/foo/bar",
+				"/foo/ba",
+				"/foo/baz",
+				"/foo/barr",
+			},
+			expVals: []string{
+				"root",
+				"foo",
+				"fo",
+				"foz",
+				"fooo",
+				"foobar",
+				"fooba",
+				"foobaz",
+				"foobarr",
+			},
+		},
+		// TODO: panic case
+		// TODO: param case
+		// TODO: general case
 	}
 
 	for _, c := range cases {
@@ -281,6 +347,7 @@ func TestHTTPRouter(t *testing.T) {
 	}
 }
 
+// TODO: 不要、後で消す
 func TestInsertAndGetForHTTPRouter(t *testing.T) {
 	items := []struct {
 		key string
