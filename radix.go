@@ -177,54 +177,15 @@ func (t *Tree) Get(k string) string {
 			break
 		}
 
-		// TODO: getChild使わずに自前で探索する必要がありそう
-		// if n.getChild(path[0]) == nil {
-		// for i := 0; i < len(n.children); i++ {
-		// 	// childrenのそれぞれのnodeのprefixとpathのプレフィックスを削った値の0番目が:であるか
-		// 	child := n.children[i].node.prefix
-		// 	cp := longestPrefix(path, string(child))
-		// 	// 	tree.Insert("/foo/bar", "foobar")
-		// 	// tree.Insert("/foo/:bar/baz", "foo-param-bar-baz")
-		// 	// TODO: ここがindex out of range になる可能性ある
-		// 	if string(child[cp:][0]) == ":" {
-		// 		n = n.children[i].node
-		// 		param := n.prefix
-		// 		pi := strings.Index(n.prefix, "/")
-		// 		if pi > 0 {
-		// 			param = n.prefix[:pi]
-		// 		}
-		// 		pathParam := path
-		// 		ppi := strings.Index(path, "/")
-		// 		if ppi > 0 {
-		// 			// NOTE: 1は/分
-		// 			pathParam = path[:ppi+1]
-		// 		}
-
-		// 		parameters[param] = pathParam
-
-		// 		path = n.prefix
-
-		// 		if n.leaf != nil {
-		// 			fmt.Printf("%#v\n", parameters)
-		// 			return n.leaf.val
-		// 		}
-		// 	}
-		// }
-		// }
-
-		// TODO: getChildを自前実装に置き換え、まずはstaticの全テストケースを通す
-		// for i, v := n.children {
-		// 	fmt.Printf("%#v\n", )
-		// }
-		n = n.getChild(path[0])
-
-		if n == nil {
-			break
+		var tmpn *node
+		for i := 0; i < len(n.children); i++ {
+			if strings.HasPrefix(path, n.children[i].node.prefix) {
+				path = path[len(n.children[i].node.prefix):]
+				tmpn = n.children[i].node
+			}
 		}
-
-		if strings.HasPrefix(path, n.prefix) {
-			path = path[len(n.prefix):]
-		} else {
+		n = tmpn
+		if n == nil {
 			break
 		}
 	}

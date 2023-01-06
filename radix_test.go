@@ -154,16 +154,6 @@ type insertItem struct {
 }
 
 func TestHTTPRouter(t *testing.T) {
-	// tree.Insert("/foo/bar", "foobar")
-	// tree.Insert("/foo/bar/baz", "foo-bar-baz")
-	// tree.Insert("/foo/:bar/baz", "foo-param-bar-baz")
-	// tree.Insert("/foo/:bar", "param-bar")
-	// tree.Insert("/foo/:bar", "param-bar")
-	// tree.Insert("/foo/baz", "foobaz") sti
-	// tree.Insert("/foo/:ba", "param-bar")
-	// tree.Insert("/foo/bazz", "foobaz")
-	// pb := tree.Get("/foo/param-bar")
-
 	cases := []struct {
 		name     string
 		items    []insertItem
