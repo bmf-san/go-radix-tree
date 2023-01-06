@@ -189,26 +189,28 @@ func (t *Tree) Get(k string) string {
 			if strings.Contains(ncp, ":") {
 				cp := longestPrefix(path, ncp)
 
-				// prefixから取得 /foo/:one → :one
-				tmppk := ncp[cp:] // /foo/:one → :one
+				tmppk := ncp[cp:]
 				pki := strings.Index(tmppk, "/")
 				pk := tmppk
 				if pki > 0 {
-					pk = tmppk[cp:pki]
+					pk = tmppk[:pki]
 				}
 
-				// pathから取得　/foo/one → one
-				tmppv := path[cp:] // /foo/one → one
+				tmppv := path[cp:]
 				pvi := strings.Index(tmppv, "/")
 				pv := tmppv
 				if pvi > 0 {
-					pv = tmppv[cp:pvi]
+					pv = tmppv[:pvi]
 				}
 
 				parameters[pk] = pv // ex. key :one val one
 
-				path = path[cp+len(pv):]
 				tmpn = n.children[i].node
+				if len(n.children[i].node.children) > 0 {
+					path = path[cp+len(pv):]
+				} else {
+					path = path[cp+len(pv)+1:] // 1 is for /
+				}
 			}
 		}
 		n = tmpn
