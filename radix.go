@@ -206,7 +206,7 @@ func (t *Tree) Get(k string) string {
 				parameters[pk] = pv // ex. key :one val one
 
 				tmpn = n.children[i].node
-				if len(n.children[i].node.children) > 0 {
+				if len(n.children[i].node.children) == 0 {
 					path = path[cp+len(pv):]
 				} else {
 					path = path[cp+len(pv)+1:] // 1 is for /
