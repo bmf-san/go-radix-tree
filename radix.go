@@ -213,6 +213,7 @@ func (t *Tree) Get(k string) string {
 						}
 						for j := 0; j < len(epk); j++ {
 							if strings.Contains(epk[j], ":") {
+								// TODO: /foo/:id/:id みたいにするとオーバーライドしてしまう
 								parameters[epk[j]] = epp[j]
 							}
 							if epk[j] == epp[j] {
