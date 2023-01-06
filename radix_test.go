@@ -165,10 +165,11 @@ func TestHTTPRouter(t *testing.T) {
 	// pb := tree.Get("/foo/param-bar")
 
 	cases := []struct {
-		name    string
-		items   []insertItem
-		getKeys []string
-		expVals []string
+		name     string
+		items    []insertItem
+		hasPanic bool
+		getKeys  []string
+		expVals  []string
 	}{
 		{
 			name: "only-root",
@@ -178,8 +179,9 @@ func TestHTTPRouter(t *testing.T) {
 					val: "only-root",
 				},
 			},
-			getKeys: []string{"/"},
-			expVals: []string{"only-root"},
+			hasPanic: false,
+			getKeys:  []string{"/"},
+			expVals:  []string{"only-root"},
 		},
 		{
 			name: "static-1",
@@ -189,8 +191,9 @@ func TestHTTPRouter(t *testing.T) {
 					val: "/static-1",
 				},
 			},
-			getKeys: []string{"/foo"},
-			expVals: []string{"static-1"},
+			hasPanic: false,
+			getKeys:  []string{"/foo"},
+			expVals:  []string{"static-1"},
 		},
 		{
 			name: "static-2",
@@ -200,8 +203,9 @@ func TestHTTPRouter(t *testing.T) {
 					val: "static-2",
 				},
 			},
-			getKeys: []string{"/foo/bar"},
-			expVals: []string{"static-2"},
+			hasPanic: false,
+			getKeys:  []string{"/foo/bar"},
+			expVals:  []string{"static-2"},
 		},
 		{
 			name: "static-3",
@@ -211,8 +215,9 @@ func TestHTTPRouter(t *testing.T) {
 					val: "static-3",
 				},
 			},
-			getKeys: []string{"/foo/bar/baz"},
-			expVals: []string{"static-3"},
+			hasPanic: false,
+			getKeys:  []string{"/foo/bar/baz"},
+			expVals:  []string{"static-3"},
 		},
 		{
 			name: "root-and-static-all",
@@ -234,6 +239,7 @@ func TestHTTPRouter(t *testing.T) {
 					val: "static-3",
 				},
 			},
+			hasPanic: false,
 			getKeys: []string{
 				"/",
 				"/foo",
@@ -252,6 +258,14 @@ func TestHTTPRouter(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			defer func() {
+				err := recover()
+				if err != nil {
+					if !c.hasPanic {
+						t.Errorf("expected no panic: %v\n", err)
+					}
+				}
+			}()
 			tree := New()
 			for _, i := range c.items {
 				tree.Insert(i.key, i.val)
