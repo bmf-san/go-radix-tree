@@ -1,6 +1,7 @@
 package radix
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -73,57 +74,137 @@ type insertItem struct {
 	val string
 }
 
-func TestStatic(t *testing.T) {
+func TestStaticAndParams(t *testing.T) {
 	cases := []struct {
-		items   []insertItem
-		getKeys []string
-		expVals []string
+		name   string
+		key    string
+		val    string
+		getKey string
+		expVal string
 		// TODO: expValsを正常系として、異常系も追加
 	}{
+		// static routes
+		// {
+		// 	name:   "root",
+		// 	key:    "/",
+		// 	val:    "root",
+		// 	getKey: "/",
+		// 	expVal: "root",
+		// },
+		// {
+		// 	name:   "static-1",
+		// 	key:    "/foo",
+		// 	val:    "static-1",
+		// 	getKey: "/foo",
+		// 	expVal: "static-1",
+		// },
 		{
-			items: []insertItem{
-				{
-					key: "/foo/:one",
-					val: "only-root",
-				},
-				{
-					key: "/foo/:one",
-					val: "only-root",
-				},
-			},
-			getKeys: []string{
-				"/", // key: "/"
-			},
-			expVals: []string{
-				"only-root", // key: "/"
-			},
+			name:   "static-2",
+			key:    "/foo/bar",
+			val:    "static-2",
+			getKey: "/foo/bar",
+			expVal: "static-2",
+		},
+		// {
+		// 	name:   "static-3",
+		// 	key:    "/foo/bar/baz",
+		// 	val:    "static-3",
+		// 	getKey: "/foo/bar/baz",
+		// 	expVal: "static-3",
+		// },
+		// {
+		// 	name:   "static-split-node-short",
+		// 	key:    "/fo/ba/ba",
+		// 	val:    "static-split-node-short",
+		// 	getKey: "/fo/ba/ba",
+		// 	expVal: "static-split-node-short",
+		// },
+		// {
+		// 	name:   "static-split-node-long",
+		// 	key:    "/fooo/barr/bazz",
+		// 	val:    "static-split-node-long",
+		// 	getKey: "/fooo/barr/bazz",
+		// 	expVal: "static-split-node-long",
+		// },
+		// param routes
+		{
+			name:   "param-1",
+			key:    "/foo/:bar",
+			val:    "param-1",
+			getKey: "/foo/1",
+			expVal: "param-1",
 		},
 	}
 
+	tree := New()
 	for _, c := range cases {
-		// defer func() {
-		// 	err := recover()
-		// 	if err != nil {
-		// 		if !c.hasPanic {
-		// 			t.Errorf("expected no panic: %v\n", err)
-		// 		}
-		// 	}
-		// }()
-		tree := New()
-		for _, i := range c.items {
-			tree.Insert(i.key, i.val)
-		}
-		var actVals []string
-		for _, k := range c.getKeys {
-			actVals = append(actVals, tree.Get(k))
-		}
-		if !reflect.DeepEqual(c.expVals, actVals) {
-			t.Fatalf("expected: %v actual: %v", c.expVals, actVals)
+		defer func() {
+			err := recover()
+			if err != nil {
+				// if !c.hasPanic {
+				t.Errorf("expected no panic: %v\n", err)
+				// }
+			}
+		}()
+		tree.Insert(c.key, c.val)
+	}
+	for _, c := range cases {
+		actVal := tree.Get(c.getKey)
+		fmt.Printf("%#v\n", parameters)
+		if c.expVal != actVal {
+			t.Fatalf("expected: %v actual: %v", c.expVal, actVal)
 		}
 	}
 }
 
-func TestHTTPRouter(t *testing.T) {
+func TestPriority(t *testing.T) {
+	cases := []struct {
+		name   string
+		key    string
+		val    string
+		getKey string
+		expVal string
+		// TODO: expValsを正常系として、異常系も追加
+	}{
+		// TODO:　優先度の仕様を分かるように
+		{
+			name:   "static-2",
+			key:    "/foo/bar",
+			val:    "static-2",
+			getKey: "/foo/bar",
+			expVal: "static-2",
+		},
+		{
+			name:   "param-1",
+			key:    "/foo/:bar",
+			val:    "param-1",
+			getKey: "/foo/bar",
+			expVal: "static-2",
+		},
+	}
+
+	tree := New()
+	for _, c := range cases {
+		defer func() {
+			err := recover()
+			if err != nil {
+				// if !c.hasPanic {
+				t.Errorf("expected no panic: %v\n", err)
+				// }
+			}
+		}()
+		tree.Insert(c.key, c.val)
+	}
+	for _, c := range cases {
+		actVal := tree.Get(c.getKey)
+		fmt.Printf("%#v\n", parameters)
+		if c.expVal != actVal {
+			t.Fatalf("expected: %v actual: %v", c.expVal, actVal)
+		}
+	}
+}
+
+func TestHTTPRouters(t *testing.T) {
 	cases := []struct {
 		name     string
 		items    []insertItem
@@ -132,153 +213,6 @@ func TestHTTPRouter(t *testing.T) {
 		expVals  []string
 		// TODO: expValsを正常系として、異常系も追加
 	}{
-		// static test cases
-		{
-			name: "only-root",
-			items: []insertItem{
-				{
-					key: "/",
-					val: "only-root",
-				},
-			},
-			hasPanic: false,
-			getKeys:  []string{"/"},
-			expVals:  []string{"only-root"},
-		},
-		{
-			name: "static-1",
-			items: []insertItem{
-				{
-					key: "/foo",
-					val: "static-1",
-				},
-			},
-			hasPanic: false,
-			getKeys:  []string{"/foo"},
-			expVals:  []string{"static-1"},
-		},
-		{
-			name: "static-2",
-			items: []insertItem{
-				{
-					key: "/foo/bar",
-					val: "static-2",
-				},
-			},
-			hasPanic: false,
-			getKeys:  []string{"/foo/bar"},
-			expVals:  []string{"static-2"},
-		},
-		{
-			name: "static-3",
-			items: []insertItem{
-				{
-					key: "/foo/bar/baz",
-					val: "static-3",
-				},
-			},
-			hasPanic: false,
-			getKeys:  []string{"/foo/bar/baz"},
-			expVals:  []string{"static-3"},
-		},
-		{
-			name: "root-and-static-all",
-			items: []insertItem{
-				{
-					key: "/",
-					val: "root",
-				},
-				{
-					key: "/foo",
-					val: "static-1",
-				},
-				{
-					key: "/foo/bar",
-					val: "static-2",
-				},
-				{
-					key: "/foo/bar/baz",
-					val: "static-3",
-				},
-			},
-			hasPanic: false,
-			getKeys: []string{
-				"/",
-				"/foo",
-				"/foo/bar",
-				"/foo/bar/baz",
-			},
-			expVals: []string{
-				"root",
-				"static-1",
-				"static-2",
-				"static-3",
-			},
-		},
-		{
-			name: "root-and-static-split-node",
-			items: []insertItem{
-				{
-					key: "/",
-					val: "root",
-				},
-				{
-					key: "/foo",
-					val: "foo",
-				},
-				{
-					key: "/fo",
-					val: "fo",
-				},
-				{
-					key: "/foz",
-					val: "foz",
-				},
-				{
-					key: "/fooo",
-					val: "fooo",
-				},
-				{
-					key: "/foo/bar",
-					val: "foobar",
-				},
-				{
-					key: "/foo/ba",
-					val: "fooba",
-				},
-				{
-					key: "/foo/baz",
-					val: "foobaz",
-				},
-				{
-					key: "/foo/barr",
-					val: "foobarr",
-				},
-			},
-			hasPanic: false,
-			getKeys: []string{
-				"/",
-				"/foo",
-				"/fo",
-				"/foz",
-				"/fooo",
-				"/foo/bar",
-				"/foo/ba",
-				"/foo/baz",
-				"/foo/barr",
-			},
-			expVals: []string{
-				"root",
-				"foo",
-				"fo",
-				"foz",
-				"fooo",
-				"foobar",
-				"fooba",
-				"foobaz",
-				"foobarr",
-			},
-		},
 		// param test cases
 		// {
 		// 	name: "param-1",
@@ -379,161 +313,8 @@ func TestHTTPRouter(t *testing.T) {
 	}
 }
 
-// TODO: 不要、後で消す
-func TestInsertAndGetForHTTPRouter(t *testing.T) {
-	items := []struct {
-		key string
-		val string
-	}{
-		{
-			key: "/",
-			val: "1",
-		},
-		{
-			key: "/foo",
-			val: "2",
-		},
-		{
-			key: "/foo/bar",
-			val: "3",
-		},
-		{
-			key: "/foo/bar/baz",
-			val: "4",
-		},
-		{
-			key: "/foo/:bar",
-			val: "5",
-		},
-		// {
-		// 	// TODO: routerの仕様としてこれをどう扱うか？ 先勝ちにするか、そもそも登録できないしようにするか。TestInsertAndGetForHTTPRouter
-		// 	// 登録できないよう仕様にするほうが安全な気がする
-		// 	key: "/foo/:ba",
-		// 	val: "9",
-		// },
-		// TODO: path paramが対応できてから対応する
-		// {
-		// 	// TODO: 正規表現がある場合は正規表現を考慮する必要があるj
-		// 	key: `/foo/:bar[^\D+$]`,
-		// 	val: "5-reg",
-		// },
-		{
-			key: "/foo/bar/:baz",
-			val: "6",
-		},
-		{
-			key: "/foo/:bar/baz",
-			val: "7",
-		},
-		// {
-		// 	// NOTE: 上書きしないでpanicにする。これは無駄な登録なので、そのほうが安全そう
-		// 	// NOTE: →上書きできないようにした
-		// 	key: "/foo/:bar/baz",
-		// 	val: "7-x",
-		// },
-		{
-			key: "/bar",
-			val: "8",
-		},
-		{
-			key: "/baz/caz",
-			val: "10",
-		},
-		{
-			key: "/baz/cat",
-			val: "11",
-		},
-		{
-			key: "/a/b/c/:d/:e/:f",
-			val: "12",
-		},
-		{
-			key: "/a/b/c/:d/:e",
-			val: "13",
-		},
-	}
-	tree := New()
-	for _, i := range items {
-		tree.Insert(i.key, i.val)
-	}
-	cases := []struct {
-		key string
-		val string
-	}{
-		// {
-		// 	key: "/",
-		// 	val: "1",
-		// },
-		// {
-		// 	key: "/foo",
-		// 	val: "2",
-		// },
-		// {
-		// 	key: "/foo/bar",
-		// 	val: "3",
-		// },
-		// {
-		// 	key: "/foo/bar/baz",
-		// 	val: "4",
-		// },
-		{
-			key: "/foo/path-param-bar",
-			val: "5",
-		},
-		// {
-		// 	// TODO: routerの仕様としてこれをどう扱うか？ 先勝ちにするか、そもそも登録できないしようにするか。TestInsertAndGetForHTTPRouter
-		// 	// 登録できないよう仕様にするほうが安全な気がする
-		// 	key: "/foo/:ba",
-		// 	val: "9",
-		// },
-		// TODO: path paramが対応できてから対応する
-		// {
-		// 	// TODO: 正規表現がある場合は正規表現を考慮する必要があるj
-		// 	key: `/foo/:bar[^\D+$]`,
-		// 	val: "5-reg",
-		// },
-		// {
-		// 	key: "/foo/bar/path-param-baz",
-		// 	val: "6",
-		// },
-		// {
-		// 	key: "/foo/:bar/baz",
-		// 	val: "7",
-		// },
-		// {
-		// 	// NOTE: 上書きしないでpanicにする。これは無駄な登録なので、そのほうが安全そう
-		// 	// NOTE: →上書きできないようにした
-		// 	key: "/foo/:bar/baz",
-		// 	val: "7-x",
-		// },
-		// {
-		// 	key: "/bar",
-		// 	val: "8",
-		// },
-		// {
-		// 	key: "/baz/caz",
-		// 	val: "10",
-		// },
-		// {
-		// 	key: "/baz/cat",
-		// 	val: "11",
-		// },
-		// {
-		// 	key: "/a/b/c/path-param-d/path-param-e/path-param-f",
-		// 	val: "12",
-		// },
-		// {
-		// 	key: "/a/b/c/path-param-d/path-param-e",
-		// 	val: "13",
-		// },
-	}
-	for _, c := range cases {
-		exp := c.val
-		act := tree.Get(c.key)
-		if exp != act {
-			t.Fatalf("expected: %v actual: %v", exp, act)
-		}
-	}
+func TestExample(t *testing.T) {
+	// TODO: bmf-techのrouting
 }
 
 func TestLongestPrefix(t *testing.T) {

@@ -236,7 +236,7 @@ func (t *Tree) Get(k string) string {
 
 		if len(path) == 0 {
 			if n.leaf != nil {
-				fmt.Printf("%#v\n", parameters)
+				// fmt.Printf("%#v\n", parameters)
 				return n.leaf.val
 			}
 			break
