@@ -168,6 +168,7 @@ var parameters = map[string]string{}
 func (t *Tree) Get(k string) string {
 	n := t.root
 	path := k
+	var tmppx string // for parammatch
 	for {
 		var tmpn *node
 		for i := 0; i < len(n.children); i++ {
@@ -176,6 +177,7 @@ func (t *Tree) Get(k string) string {
 			if strings.HasPrefix(path, ncp) {
 				path = path[len(ncp):]
 				tmpn = n.children[i].node
+				tmppx = ncp
 			}
 			// param match
 			if strings.Contains(ncp, ":") {
@@ -195,11 +197,31 @@ func (t *Tree) Get(k string) string {
 					pv = tmppv[:pvi]
 				}
 
+				// TODO: /foo/:id/:id みたいにするとオーバーライドしてしまう
 				parameters[pk] = pv // ex. key :one val one
+
+				tmppx = ncp[:cp+len(pk)]
 
 				tmpn = n.children[i].node
 				if len(n.children[i].node.children) == 0 {
 					path = path[cp+len(pv):]
+					if n.children[i].node.leaf != nil {
+						epk := explodePath(n.children[i].node.leaf.key[len(tmppx):])
+						epp := explodePath(path)
+						if len(epk) != len(epp) {
+							return ""
+						}
+						for j := 0; j < len(epk); j++ {
+							if strings.Contains(epk[j], ":") {
+								parameters[epk[j]] = epp[j]
+							}
+							if epk[j] == epp[j] {
+								continue
+							}
+						}
+					}
+					path = ""
+					break
 				} else {
 					path = path[cp+len(pv)+1:] // 1 is for /
 				}
@@ -221,4 +243,11 @@ func (t *Tree) Get(k string) string {
 		}
 	}
 	return ""
+}
+
+func explodePath(path string) []string {
+	splitFn := func(c rune) bool {
+		return c == '/'
+	}
+	return strings.FieldsFunc(path, splitFn)
 }

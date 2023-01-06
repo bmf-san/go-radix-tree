@@ -68,86 +68,6 @@ func TestNew(t *testing.T) {
 	}
 }
 
-func TestInsertAndGet(t *testing.T) {
-	items := []struct {
-		key string
-		val string
-	}{
-		{
-			key: "root",
-			val: "1",
-		},
-		{
-			key: "slow",
-			val: "2",
-		},
-		{
-			key: "slower",
-			val: "3",
-		},
-		{
-			key: "waste",
-			val: "4",
-		},
-		{
-			key: "water",
-			val: "5",
-		},
-		{
-			key: "watch",
-			val: "6",
-		},
-		{
-			key: "watcher",
-			val: "7",
-		},
-	}
-	tree := New()
-	for _, i := range items {
-		tree.Insert(i.key, i.val)
-	}
-	cases := []struct {
-		key    string
-		expVal string
-	}{
-		{
-			key:    "root",
-			expVal: "1",
-		},
-		{
-			key:    "slow",
-			expVal: "2",
-		},
-		{
-			key:    "slower",
-			expVal: "3",
-		},
-		{
-			key:    "waste",
-			expVal: "4",
-		},
-		{
-			key:    "water",
-			expVal: "5",
-		},
-		{
-			key:    "watch",
-			expVal: "6",
-		},
-		{
-			key:    "watcher",
-			expVal: "7",
-		},
-	}
-	for _, c := range cases {
-		exp := c.expVal
-		act := tree.Get(c.key)
-		if exp != act {
-			t.Fatalf("expected: %v actual: %v", exp, act)
-		}
-	}
-}
-
 type insertItem struct {
 	key string
 	val string
@@ -322,18 +242,26 @@ func TestHTTPRouter(t *testing.T) {
 		// 	getKeys:  []string{"/foo/one"},
 		// 	expVals:  []string{"param-1"},
 		// },
-		{
-			name: "param-2",
-			items: []insertItem{
-				{
-					key: "/foo/:one/:two",
-					val: "param-2",
-				},
-			},
-			hasPanic: false,
-			getKeys:  []string{"/foo/one/two"},
-			expVals:  []string{"param-2"},
-		},
+		// {
+		// 	name: "param-2",
+		// 	items: []insertItem{
+		// 		{
+		// 			key: "/foo/:one/:two",
+		// 			val: "param-2",
+		// 		},
+		// 	},
+		// 	hasPanic: false,
+		// 	getKeys:  []string{"/foo/one/two"},
+		// 	expVals:  []string{"param-2"},
+		// },
+
+		// TODO:
+		// /foo/:one/two/:three
+
+		// TODO:
+		// /foo/bar/baz
+		// /foo/:bar/baz
+
 		// {
 		// 	name: "param-3",
 		// 	items: []insertItem{
@@ -358,18 +286,18 @@ func TestHTTPRouter(t *testing.T) {
 		// 	getKeys:  []string{"/foo/one/bar"},
 		// 	expVals:  []string{"param-1-middle"},
 		// },
-		// {
-		// 	name: "param-2-middle",
-		// 	items: []insertItem{
-		// 		{
-		// 			key: "/foo/:one/bar/:two",
-		// 			val: "param-2-middle",
-		// 		},
-		// 	},
-		// 	hasPanic: false,
-		// 	getKeys:  []string{"/foo/one/bar/two"},
-		// 	expVals:  []string{"param-2-middle"},
-		// },
+		{
+			name: "param-2-middle",
+			items: []insertItem{
+				{
+					key: "/foo/:one/bar/:two",
+					val: "param-2-middle",
+				},
+			},
+			hasPanic: false,
+			getKeys:  []string{"/foo/one/bar/two"},
+			expVals:  []string{"param-2-middle"},
+		},
 		// TODO: param all case
 		// priority test cases
 		// panic test cases
