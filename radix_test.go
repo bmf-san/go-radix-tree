@@ -1,7 +1,6 @@
 package radix
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 )
@@ -149,21 +148,123 @@ func TestInsertAndGet(t *testing.T) {
 	}
 }
 
-func TestUnderstandGetChild(t *testing.T) {
-	// TODO: テストケース用意
-	tree := New()
+type insertItem struct {
+	key string
+	val string
+}
+
+func TestHTTPRouter(t *testing.T) {
 	// tree.Insert("/foo/bar", "foobar")
 	// tree.Insert("/foo/bar/baz", "foo-bar-baz")
-	tree.Insert("/foo/:bar/baz", "foo-param-bar-baz")
+	// tree.Insert("/foo/:bar/baz", "foo-param-bar-baz")
 	// tree.Insert("/foo/:bar", "param-bar")
 	// tree.Insert("/foo/:bar", "param-bar")
-	// tree.Insert("/foo/baz", "foobaz")
+	// tree.Insert("/foo/baz", "foobaz") sti
 	// tree.Insert("/foo/:ba", "param-bar")
 	// tree.Insert("/foo/bazz", "foobaz")
 	// pb := tree.Get("/foo/param-bar")
-	pb := tree.Get("/foo/aa")
-	// b := tree.Get("/foo/bar")
-	fmt.Printf("%#v\n", pb)
+
+	cases := []struct {
+		name    string
+		items   []insertItem
+		getKeys []string
+		expVals []string
+	}{
+		{
+			name: "only-root",
+			items: []insertItem{
+				{
+					key: "/",
+					val: "only-root",
+				},
+			},
+			getKeys: []string{"/"},
+			expVals: []string{"only-root"},
+		},
+		{
+			name: "static-1",
+			items: []insertItem{
+				{
+					key: "/foo",
+					val: "/static-1",
+				},
+			},
+			getKeys: []string{"/foo"},
+			expVals: []string{"static-1"},
+		},
+		{
+			name: "static-2",
+			items: []insertItem{
+				{
+					key: "/foo/bar",
+					val: "static-2",
+				},
+			},
+			getKeys: []string{"/foo/bar"},
+			expVals: []string{"static-2"},
+		},
+		{
+			name: "static-3",
+			items: []insertItem{
+				{
+					key: "/foo/bar/baz",
+					val: "static-3",
+				},
+			},
+			getKeys: []string{"/foo/bar/baz"},
+			expVals: []string{"static-3"},
+		},
+		{
+			name: "root-and-static-all",
+			items: []insertItem{
+				{
+					key: "/",
+					val: "root",
+				},
+				{
+					key: "/foo",
+					val: "static-1",
+				},
+				{
+					key: "/foo/bar",
+					val: "static-2",
+				},
+				{
+					key: "/foo/bar/baz",
+					val: "static-3",
+				},
+			},
+			getKeys: []string{
+				"/",
+				"/foo",
+				"/foo/bar",
+				"/foo/bar/baz",
+			},
+			expVals: []string{
+				"root",
+				"static-1",
+				"static-2",
+				"static-3",
+			},
+		},
+		// TODO: param
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			tree := New()
+			for _, i := range c.items {
+				tree.Insert(i.key, i.val)
+			}
+			var actVals []string
+			for _, k := range c.getKeys {
+				actVals = append(actVals, tree.Get(k))
+			}
+			if !reflect.DeepEqual(c.expVals, actVals) {
+				t.Fatalf("expected: %v actual: %v", c.expVals, actVals)
+			}
+		})
+	}
 }
 
 func TestInsertAndGetForHTTPRouter(t *testing.T) {
