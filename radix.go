@@ -169,14 +169,6 @@ func (t *Tree) Get(k string) string {
 	n := t.root
 	path := k
 	for {
-		if len(path) == 0 {
-			if n.leaf != nil {
-				fmt.Printf("%#v\n", parameters)
-				return n.leaf.val
-			}
-			break
-		}
-
 		var tmpn *node
 		for i := 0; i < len(n.children); i++ {
 			// prefix match
@@ -213,8 +205,18 @@ func (t *Tree) Get(k string) string {
 				}
 			}
 		}
+
 		n = tmpn
+
 		if n == nil {
+			break
+		}
+
+		if len(path) == 0 {
+			if n.leaf != nil {
+				fmt.Printf("%#v\n", parameters)
+				return n.leaf.val
+			}
 			break
 		}
 	}
