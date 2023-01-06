@@ -212,7 +212,7 @@ func (t *Tree) Get(k string) string {
 		// }
 		// }
 
-		fmt.Printf("%v", n.children)
+		// TODO: getChildを自前実装に置き換え、まずはstaticの全テストケースを通す
 		// for i, v := n.children {
 		// 	fmt.Printf("%#v\n", )
 		// }
