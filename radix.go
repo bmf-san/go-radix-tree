@@ -168,9 +168,39 @@ var parameters = map[string]string{}
 func (t *Tree) Get(k string) string {
 	n := t.root
 	path := k
+	if path == "/" {
+		n = n.getChild(path[0])
+		if n == nil {
+			return ""
+		}
+		if n.leaf != nil {
+			return n.leaf.val
+		}
+		return ""
+	}
 	var tmppx string // for parammatch
 	for {
 		var tmpn *node
+		if n.getChild(path[0]) != nil {
+			n = n.getChild(path[0])
+			if n.prefix == "/" {
+				path = path[len(n.prefix):]
+			} else {
+				ppcp := longestPrefix(path, n.prefix)
+				path = path[ppcp:]
+			}
+
+			if len(path) == 0 {
+				if n.leaf != nil {
+					// fmt.Printf("%#v\n", parameters)
+					return n.leaf.val
+				}
+				break
+			}
+
+			continue
+		}
+]
 		for i := 0; i < len(n.children); i++ {
 			// prefix match
 			ncp := n.children[i].node.prefix
@@ -205,6 +235,9 @@ func (t *Tree) Get(k string) string {
 				tmpn = n.children[i].node
 				if len(n.children[i].node.children) == 0 {
 					path = path[cp+len(pv):]
+					if path == "" {
+						break
+					}
 					if n.children[i].node.leaf != nil {
 						epk := explodePath(n.children[i].node.leaf.key[len(tmppx):])
 						epp := explodePath(path)
@@ -235,6 +268,7 @@ func (t *Tree) Get(k string) string {
 			break
 		}
 
+		// TODO: ここはforの冒頭だけで良い条件かも
 		if len(path) == 0 {
 			if n.leaf != nil {
 				// fmt.Printf("%#v\n", parameters)
