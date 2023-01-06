@@ -73,6 +73,56 @@ type insertItem struct {
 	val string
 }
 
+func TestStatic(t *testing.T) {
+	cases := []struct {
+		items   []insertItem
+		getKeys []string
+		expVals []string
+		// TODO: expValsを正常系として、異常系も追加
+	}{
+		{
+			items: []insertItem{
+				{
+					key: "/foo/:one",
+					val: "only-root",
+				},
+				{
+					key: "/foo/:one",
+					val: "only-root",
+				},
+			},
+			getKeys: []string{
+				"/", // key: "/"
+			},
+			expVals: []string{
+				"only-root", // key: "/"
+			},
+		},
+	}
+
+	for _, c := range cases {
+		// defer func() {
+		// 	err := recover()
+		// 	if err != nil {
+		// 		if !c.hasPanic {
+		// 			t.Errorf("expected no panic: %v\n", err)
+		// 		}
+		// 	}
+		// }()
+		tree := New()
+		for _, i := range c.items {
+			tree.Insert(i.key, i.val)
+		}
+		var actVals []string
+		for _, k := range c.getKeys {
+			actVals = append(actVals, tree.Get(k))
+		}
+		if !reflect.DeepEqual(c.expVals, actVals) {
+			t.Fatalf("expected: %v actual: %v", c.expVals, actVals)
+		}
+	}
+}
+
 func TestHTTPRouter(t *testing.T) {
 	cases := []struct {
 		name     string
@@ -83,152 +133,152 @@ func TestHTTPRouter(t *testing.T) {
 		// TODO: expValsを正常系として、異常系も追加
 	}{
 		// static test cases
-		// {
-		// 	name: "only-root",
-		// 	items: []insertItem{
-		// 		{
-		// 			key: "/",
-		// 			val: "only-root",
-		// 		},
-		// 	},
-		// 	hasPanic: false,
-		// 	getKeys:  []string{"/"},
-		// 	expVals:  []string{"only-root"},
-		// },
-		// {
-		// 	name: "static-1",
-		// 	items: []insertItem{
-		// 		{
-		// 			key: "/foo",
-		// 			val: "static-1",
-		// 		},
-		// 	},
-		// 	hasPanic: false,
-		// 	getKeys:  []string{"/foo"},
-		// 	expVals:  []string{"static-1"},
-		// },
-		// {
-		// 	name: "static-2",
-		// 	items: []insertItem{
-		// 		{
-		// 			key: "/foo/bar",
-		// 			val: "static-2",
-		// 		},
-		// 	},
-		// 	hasPanic: false,
-		// 	getKeys:  []string{"/foo/bar"},
-		// 	expVals:  []string{"static-2"},
-		// },
-		// {
-		// 	name: "static-3",
-		// 	items: []insertItem{
-		// 		{
-		// 			key: "/foo/bar/baz",
-		// 			val: "static-3",
-		// 		},
-		// 	},
-		// 	hasPanic: false,
-		// 	getKeys:  []string{"/foo/bar/baz"},
-		// 	expVals:  []string{"static-3"},
-		// },
-		// {
-		// 	name: "root-and-static-all",
-		// 	items: []insertItem{
-		// 		{
-		// 			key: "/",
-		// 			val: "root",
-		// 		},
-		// 		{
-		// 			key: "/foo",
-		// 			val: "static-1",
-		// 		},
-		// 		{
-		// 			key: "/foo/bar",
-		// 			val: "static-2",
-		// 		},
-		// 		{
-		// 			key: "/foo/bar/baz",
-		// 			val: "static-3",
-		// 		},
-		// 	},
-		// 	hasPanic: false,
-		// 	getKeys: []string{
-		// 		"/",
-		// 		"/foo",
-		// 		"/foo/bar",
-		// 		"/foo/bar/baz",
-		// 	},
-		// 	expVals: []string{
-		// 		"root",
-		// 		"static-1",
-		// 		"static-2",
-		// 		"static-3",
-		// 	},
-		// },
-		// {
-		// 	name: "root-and-static-split-node",
-		// 	items: []insertItem{
-		// 		{
-		// 			key: "/",
-		// 			val: "root",
-		// 		},
-		// 		{
-		// 			key: "/foo",
-		// 			val: "foo",
-		// 		},
-		// 		{
-		// 			key: "/fo",
-		// 			val: "fo",
-		// 		},
-		// 		{
-		// 			key: "/foz",
-		// 			val: "foz",
-		// 		},
-		// 		{
-		// 			key: "/fooo",
-		// 			val: "fooo",
-		// 		},
-		// 		{
-		// 			key: "/foo/bar",
-		// 			val: "foobar",
-		// 		},
-		// 		{
-		// 			key: "/foo/ba",
-		// 			val: "fooba",
-		// 		},
-		// 		{
-		// 			key: "/foo/baz",
-		// 			val: "foobaz",
-		// 		},
-		// 		{
-		// 			key: "/foo/barr",
-		// 			val: "foobarr",
-		// 		},
-		// 	},
-		// 	hasPanic: false,
-		// 	getKeys: []string{
-		// 		"/",
-		// 		"/foo",
-		// 		"/fo",
-		// 		"/foz",
-		// 		"/fooo",
-		// 		"/foo/bar",
-		// 		"/foo/ba",
-		// 		"/foo/baz",
-		// 		"/foo/barr",
-		// 	},
-		// 	expVals: []string{
-		// 		"root",
-		// 		"foo",
-		// 		"fo",
-		// 		"foz",
-		// 		"fooo",
-		// 		"foobar",
-		// 		"fooba",
-		// 		"foobaz",
-		// 		"foobarr",
-		// 	},
-		// },
+		{
+			name: "only-root",
+			items: []insertItem{
+				{
+					key: "/",
+					val: "only-root",
+				},
+			},
+			hasPanic: false,
+			getKeys:  []string{"/"},
+			expVals:  []string{"only-root"},
+		},
+		{
+			name: "static-1",
+			items: []insertItem{
+				{
+					key: "/foo",
+					val: "static-1",
+				},
+			},
+			hasPanic: false,
+			getKeys:  []string{"/foo"},
+			expVals:  []string{"static-1"},
+		},
+		{
+			name: "static-2",
+			items: []insertItem{
+				{
+					key: "/foo/bar",
+					val: "static-2",
+				},
+			},
+			hasPanic: false,
+			getKeys:  []string{"/foo/bar"},
+			expVals:  []string{"static-2"},
+		},
+		{
+			name: "static-3",
+			items: []insertItem{
+				{
+					key: "/foo/bar/baz",
+					val: "static-3",
+				},
+			},
+			hasPanic: false,
+			getKeys:  []string{"/foo/bar/baz"},
+			expVals:  []string{"static-3"},
+		},
+		{
+			name: "root-and-static-all",
+			items: []insertItem{
+				{
+					key: "/",
+					val: "root",
+				},
+				{
+					key: "/foo",
+					val: "static-1",
+				},
+				{
+					key: "/foo/bar",
+					val: "static-2",
+				},
+				{
+					key: "/foo/bar/baz",
+					val: "static-3",
+				},
+			},
+			hasPanic: false,
+			getKeys: []string{
+				"/",
+				"/foo",
+				"/foo/bar",
+				"/foo/bar/baz",
+			},
+			expVals: []string{
+				"root",
+				"static-1",
+				"static-2",
+				"static-3",
+			},
+		},
+		{
+			name: "root-and-static-split-node",
+			items: []insertItem{
+				{
+					key: "/",
+					val: "root",
+				},
+				{
+					key: "/foo",
+					val: "foo",
+				},
+				{
+					key: "/fo",
+					val: "fo",
+				},
+				{
+					key: "/foz",
+					val: "foz",
+				},
+				{
+					key: "/fooo",
+					val: "fooo",
+				},
+				{
+					key: "/foo/bar",
+					val: "foobar",
+				},
+				{
+					key: "/foo/ba",
+					val: "fooba",
+				},
+				{
+					key: "/foo/baz",
+					val: "foobaz",
+				},
+				{
+					key: "/foo/barr",
+					val: "foobarr",
+				},
+			},
+			hasPanic: false,
+			getKeys: []string{
+				"/",
+				"/foo",
+				"/fo",
+				"/foz",
+				"/fooo",
+				"/foo/bar",
+				"/foo/ba",
+				"/foo/baz",
+				"/foo/barr",
+			},
+			expVals: []string{
+				"root",
+				"foo",
+				"fo",
+				"foz",
+				"fooo",
+				"foobar",
+				"fooba",
+				"foobaz",
+				"foobarr",
+			},
+		},
 		// param test cases
 		// {
 		// 	name: "param-1",
