@@ -127,7 +127,7 @@ func TestStatic(t *testing.T) {
 		},
 	}
 
-	testAssert(t, cases)
+	testAssertGet(t, cases)
 }
 
 func TestRootWithOneParam(t *testing.T) {
@@ -166,7 +166,7 @@ func TestRootWithOneParam(t *testing.T) {
 		// },
 	}
 
-	testAssert(t, cases)
+	testAssertGet(t, cases)
 }
 
 func TestRootWithTwoParam(t *testing.T) {
@@ -196,7 +196,7 @@ func TestRootWithTwoParam(t *testing.T) {
 		},
 	}
 
-	testAssert(t, cases)
+	testAssertGet(t, cases)
 }
 
 func TestOnlyRoot(t *testing.T) {
@@ -218,7 +218,7 @@ func TestOnlyRoot(t *testing.T) {
 		},
 	}
 
-	testAssert(t, cases)
+	testAssertGet(t, cases)
 }
 
 func TestWithoutRootOnlyStatic(t *testing.T) {
@@ -248,7 +248,7 @@ func TestWithoutRootOnlyStatic(t *testing.T) {
 		},
 	}
 
-	testAssert(t, cases)
+	testAssertGet(t, cases)
 }
 
 func TestWithoutRootOnlyOneParam(t *testing.T) {
@@ -270,7 +270,7 @@ func TestWithoutRootOnlyOneParam(t *testing.T) {
 		},
 	}
 
-	testAssert(t, cases)
+	testAssertGet(t, cases)
 }
 
 func TestWithoutRootOnlyTwoParam(t *testing.T) {
@@ -301,7 +301,7 @@ func TestWithoutRootOnlyTwoParam(t *testing.T) {
 		},
 	}
 
-	testAssert(t, cases)
+	testAssertGet(t, cases)
 }
 
 func TestOnlyRootAndOneStatic(t *testing.T) {
@@ -331,7 +331,7 @@ func TestOnlyRootAndOneStatic(t *testing.T) {
 		},
 	}
 
-	testAssert(t, cases)
+	testAssertGet(t, cases)
 }
 
 func TestOnlyRootAndTwoStatic(t *testing.T) {
@@ -369,7 +369,7 @@ func TestOnlyRootAndTwoStatic(t *testing.T) {
 		},
 	}
 
-	testAssert(t, cases)
+	testAssertGet(t, cases)
 }
 
 func TestParamIfNotMatchStatic(t *testing.T) {
@@ -399,7 +399,7 @@ func TestParamIfNotMatchStatic(t *testing.T) {
 		},
 	}
 
-	testAssert(t, cases)
+	testAssertGet(t, cases)
 }
 
 func TestExample(t *testing.T) {
@@ -463,9 +463,9 @@ func TestExample(t *testing.T) {
 			name:      "categories/:name",
 			key:       "/categories/:name",
 			val:       "categories/:name",
-			getKey:    "/categories/name",
+			getKey:    "/categories/cate-name",
 			expVal:    "categories/:name",
-			expParams: map[string]string{":name": "name"},
+			expParams: map[string]string{":name": "cate-name"},
 		},
 		// {
 		// 	name:      "tags",
@@ -479,29 +479,239 @@ func TestExample(t *testing.T) {
 			name:      "tags/:name",
 			key:       "/tags/:name",
 			val:       "tags/:name",
-			getKey:    "/tags/name",
+			getKey:    "/tags/tag-name",
 			expVal:    "tags/:name",
-			expParams: map[string]string{":name": "name"},
+			expParams: map[string]string{":name": "tag-name"},
 		},
-		// {
-		// 	name:      "signin",
-		// 	key:       "/signin",
-		// 	val:       "signin",
-		// 	getKey:    "/signin",
-		// 	expVal:    "signin",
-		// 	expParams: map[string]string{},
-		// },
+		// TODO: categories/:nameに一致してしまう
+		{
+			name:      "signin",
+			key:       "/signin",
+			val:       "signin",
+			getKey:    "/signin",
+			expVal:    "signin",
+			expParams: map[string]string{},
+		},
 		// TODO: add private api routes
 	}
 
-	testAssert(t, cases)
+	testAssertGet(t, cases)
 }
 
 func TestGoblin(t *testing.T) {
 	// TODO: goblinのテストケースも
 }
 
-func testAssert(t *testing.T, cases []struct {
+func TestInsert(t *testing.T) {
+	cases := []struct {
+		name     string
+		key      string
+		val      string
+		hasPanic bool
+	}{
+		// Those with haspanic true are not registered in the tree.
+		{
+			name:     "root",
+			key:      "/",
+			val:      "root",
+			hasPanic: false,
+		},
+		{
+			name:     "root",
+			key:      "/",
+			val:      "root", // duplicate path registration with /
+			hasPanic: true,
+		},
+		{
+			name:     "1",
+			key:      "/foo",
+			val:      "1",
+			hasPanic: false,
+		},
+		{
+			name:     "2",
+			key:      "/foo",
+			val:      "2",
+			hasPanic: true, // dupulicate path registration with /foo
+		},
+		{
+			name:     "3",
+			key:      "/foo/bar",
+			val:      "3",
+			hasPanic: false,
+		},
+		{
+			name:     "4",
+			key:      "/foo/bar", // duplicate path registration with /foo/bar
+			val:      "4",
+			hasPanic: true,
+		},
+		{
+			name:     "5",
+			key:      "/foo/baz",
+			val:      "5",
+			hasPanic: false,
+		},
+		{
+			name:     "6",
+			key:      "/foo/baz", // duplicate path registration with /foo/baz
+			val:      "6",
+			hasPanic: true,
+		},
+		{
+			name:     "7",
+			key:      "/foo/bar/bar",
+			val:      "7",
+			hasPanic: false,
+		},
+		{
+			name:     "8",
+			key:      "/foo/bar/bar", // dupulicate path registration with /foo/bar/bar
+			val:      "8",
+			hasPanic: true,
+		},
+		{
+			name:     "9",
+			key:      "/foo/bar/baz",
+			val:      "9",
+			hasPanic: false,
+		},
+		{
+			name:     "10",
+			key:      "/foo/:bar",
+			val:      "10",
+			hasPanic: false,
+		},
+		{
+			name:     "11",
+			key:      "/foo/:bar",
+			val:      "11",
+			hasPanic: true, // dupulicate path registration with /foo/:bar
+		},
+		{
+			name:     "12",
+			key:      "/foo/:baz",
+			val:      "12",
+			hasPanic: true, // conflicts with /foo/:bar
+		},
+		{
+			name:     "13",
+			key:      "/foo/:bar/:bar",
+			val:      "13",
+			hasPanic: false,
+		},
+		{
+			name:     "14",
+			key:      "/foo/:bar/:bar",
+			val:      "14",
+			hasPanic: true, // duplicate path registration with /foo/:bar/:bar
+		},
+		{
+			name:     "15",
+			key:      "/foo/:bar/:baz",
+			val:      "15",
+			hasPanic: true, // conflics with /foo/:bar/:bar
+		},
+		{
+			name:     "16",
+			key:      "/foo/:bar/qux",
+			val:      "16",
+			hasPanic: false,
+		},
+		{
+			name:     "17",
+			key:      "/foo/:bar/qux", // duplicates with /foo/:bar/qux
+			val:      "17",
+			hasPanic: true,
+		},
+		{
+			name:     "18",
+			key:      "/foo/:bar/:qux", // duplicates with /foo/:bar/:bar
+			val:      "18",
+			hasPanic: true,
+		},
+		{
+			name:     "19",
+			key:      "/foo/:bar/quux",
+			val:      "19",
+			hasPanic: false,
+		},
+		{
+			name:     "20",
+			key:      "/foo/:bar/qux/quux",
+			val:      "20",
+			hasPanic: false,
+		},
+		{
+			name:     "21",
+			key:      "/foo/:bar/qux/quux", // duplicates with /foo/:bar/qux/quux
+			val:      "21",
+			hasPanic: true,
+		},
+		{
+			name:     "22",
+			key:      "/foo/:bar/qux/:quux",
+			val:      "22",
+			hasPanic: false,
+		},
+	}
+
+	testAssertInsert(t, cases)
+}
+
+func TestInsertExample(t *testing.T) {
+	// TODO: ここから
+	cases := []struct {
+		name     string
+		key      string
+		val      string
+		hasPanic bool
+	}{
+		// Those with haspanic true are not registered in the tree.
+		{
+			name:     "root",
+			key:      "/foo/:bar/:baz",
+			val:      "root",
+			hasPanic: false,
+		},
+		{
+			name:     "root",
+			key:      "/foo/:bar/:bam",
+			val:      "root",
+			hasPanic: false,
+		},
+	}
+
+	testAssertInsert(t, cases)
+}
+
+func testAssertInsert(t *testing.T, cases []struct {
+	name     string
+	key      string
+	val      string
+	hasPanic bool
+}) {
+	tree := New()
+	for _, c := range cases {
+		// use anonymous functions to continue test cases.
+		func() {
+			defer func() {
+				err := recover()
+				if !c.hasPanic {
+					if err != nil {
+						t.Fatalf("%#v\n", err)
+					}
+				}
+			}()
+			tree.Insert(c.key, c.val)
+			if c.hasPanic {
+				t.Fatal("expected panic, but not")
+			}
+		}()
+	}
+}
+
+func testAssertGet(t *testing.T, cases []struct {
 	name      string
 	key       string
 	val       string
@@ -511,13 +721,16 @@ func testAssert(t *testing.T, cases []struct {
 }) {
 	tree := New()
 	for _, c := range cases {
-		defer func() {
-			err := recover()
-			if err != nil {
-				t.Errorf("expected no panic: %v\n", err)
-			}
+		// use anonymous functions to continue test cases.
+		func() {
+			defer func() {
+				err := recover()
+				if err != nil {
+					t.Fatalf("expected no panic: %v\n", err)
+				}
+			}()
+			tree.Insert(c.key, c.val)
 		}()
-		tree.Insert(c.key, c.val)
 	}
 	for _, c := range cases {
 		actVal := tree.Get(c.getKey)

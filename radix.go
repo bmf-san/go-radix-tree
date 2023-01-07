@@ -99,6 +99,7 @@ func (t *Tree) Insert(k, v string) {
 	path := k
 	for {
 		parent = n
+		// Do not allow duplicate registration of the same path.
 		if path == "" {
 			panic(fmt.Sprintf("duplicate path registration. path: %v prefix: %v", k, n.prefix))
 		}
@@ -124,13 +125,14 @@ func (t *Tree) Insert(k, v string) {
 			continue
 		}
 
-		// TODO: この条件ではだめ
-		if strings.Contains(path, ":") && strings.Contains(n.prefix, ":") {
-			panic(fmt.Sprintf("conflicts path parameter. path: %v prefix: %v", path, n.prefix))
-		}
-
 		spln := &node{
 			prefix: path[:commonPrefix],
+		}
+
+		// Path parameters do not divide a node. Multiple path parameters cannot be registered for a particular path hierarchy.
+		// Example: If /foo/:bar/baz is registered, insertion of /foo/:baz/baz will conflict. Because it conflicts between :bar and :baz.
+		if strings.Contains(spln.prefix, ":") {
+			panic(fmt.Sprintf("conflicts path parameter. path: %v prefix: %v", path, n.prefix))
 		}
 		parent.updateChild(path[0], spln)
 
@@ -167,141 +169,168 @@ var parameters = map[string]string{}
 
 // Get gets a value from tree by key.
 func (t *Tree) Get(k string) string {
+	// TODO: parameterを考慮する
 	n := t.root
-	path := k
-	if path == "/" {
-		n = n.getChild(path[0])
-		if n == nil {
-			return ""
-		}
-		if n.leaf != nil {
-			return n.leaf.val
-		}
-		return ""
-	}
-	var tmppx string // for parammatch
+	search := k
 	for {
-		var tmpn *node
-		if len(path) == 0 {
+		if len(search) == 0 {
 			if n.leaf != nil {
-				// fmt.Printf("%#v\n", parameters)
 				return n.leaf.val
 			}
 			break
 		}
-		if n.getChild(path[0]) != nil {
-			n = n.getChild(path[0])
-			if n.prefix == "/" {
-				path = path[len(n.prefix):]
-			} else {
-				ppcp := longestPrefix(path, n.prefix)
-				path = path[ppcp:]
-				tmppx = n.prefix[:ppcp]
-			}
 
-			continue
-		}
-
-		// TODO: pathがあるけどchildrenが0の場合 ≒ 最終ノードになる。
-		if len(n.children) == 0 {
-			if n.leaf != nil {
-				ep1 := explodePath(n.prefix[len(tmppx):])
-				ep2 := explodePath(path)
-				if len(ep1) != len(ep2) {
-					return ""
-				}
-				for j := 0; j < len(ep1); j++ {
-					if strings.Contains(ep1[j], ":") {
-						// TODO: /foo/:id/:id みたいにするとオーバーライドしてしまう
-						parameters[ep1[j]] = ep2[j]
-					}
-					if ep1[j] == ep2[j] {
-						continue
-					}
-				}
-				return n.leaf.val
-			}
-			return ""
-		}
-
-		for i := 0; i < len(n.children); i++ {
-			// prefix match
-			ncp := n.children[i].node.prefix
-			if strings.HasPrefix(path, ncp) {
-				path = path[len(ncp):]
-				tmpn = n.children[i].node
-				tmppx = ncp
-			}
-			// param match
-			if strings.Contains(ncp, ":") {
-				cp := longestPrefix(path, ncp)
-
-				tmppk := ncp[cp:]
-				pki := strings.Index(tmppk, "/")
-				pk := tmppk
-				if pki > 0 {
-					pk = tmppk[:pki]
-				}
-
-				tmppv := path[cp:]
-				pvi := strings.Index(tmppv, "/")
-				pv := tmppv
-				if pvi > 0 {
-					pv = tmppv[:pvi]
-				}
-
-				// TODO: /foo/:id/:id みたいにするとオーバーライドしてしまう
-				parameters[pk] = pv // ex. key :one val one
-
-				tmppx = ncp[:cp+len(pk)]
-
-				tmpn = n.children[i].node
-				if len(n.children[i].node.children) == 0 {
-					path = path[cp+len(pv):]
-					if path == "" {
-						break
-					}
-					if n.children[i].node.leaf != nil {
-						epk := explodePath(n.children[i].node.leaf.key[len(tmppx):])
-						epp := explodePath(path)
-						if len(epk) != len(epp) {
-							return ""
-						}
-						for j := 0; j < len(epk); j++ {
-							if strings.Contains(epk[j], ":") {
-								// TODO: /foo/:id/:id みたいにするとオーバーライドしてしまう
-								parameters[epk[j]] = epp[j]
-							}
-							if epk[j] == epp[j] {
-								continue
-							}
-						}
-					}
-					path = ""
-					break
-				} else {
-					path = path[cp+len(pv)+1:] // 1 is for /
-				}
-			}
-		}
-
-		n = tmpn
-
+		n = n.getChild(search[0])
 		if n == nil {
 			break
 		}
 
-		// TODO: ここはforの冒頭だけで良い条件かも
-		// if len(path) == 0 {
-		// 	if n.leaf != nil {
-		// 		// fmt.Printf("%#v\n", parameters)
-		// 		return n.leaf.val
-		// 	}
-		// 	break
-		// }
+		if strings.HasPrefix(search, n.prefix) {
+			search = search[len(n.prefix):]
+		} else {
+			break
+		}
 	}
 	return ""
 }
+
+// Get gets a value from tree by key.
+// func (t *Tree) Get(k string) string {
+// 	n := t.root
+// 	path := k
+// 	if path == "/" {
+// 		n = n.getChild(path[0])
+// 		if n == nil {
+// 			return ""
+// 		}
+// 		if n.leaf != nil {
+// 			return n.leaf.val
+// 		}
+// 		return ""
+// 	}
+// 	var tmppx string // for parammatch
+// 	for {
+// 		var tmpn *node
+// 		if len(path) == 0 {
+// 			if n.leaf != nil {
+// 				// fmt.Printf("%#v\n", parameters)
+// 				return n.leaf.val
+// 			}
+// 			break
+// 		}
+// 		if n.getChild(path[0]) != nil {
+// 			n = n.getChild(path[0])
+// 			if n.prefix == "/" {
+// 				path = path[len(n.prefix):]
+// 			} else {
+// 				ppcp := longestPrefix(path, n.prefix)
+// 				path = path[ppcp:]
+// 				tmppx = n.prefix[:ppcp]
+// 			}
+
+// 			continue
+// 		}
+
+// 		// TODO: pathがあるけどchildrenが0の場合 ≒ 最終ノードになる。
+// 		if len(n.children) == 0 {
+// 			if n.leaf != nil {
+// 				ep1 := explodePath(n.prefix[len(tmppx):])
+// 				ep2 := explodePath(path)
+// 				if len(ep1) != len(ep2) {
+// 					return ""
+// 				}
+// 				for j := 0; j < len(ep1); j++ {
+// 					if strings.Contains(ep1[j], ":") {
+// 						// TODO: /foo/:id/:id みたいにするとオーバーライドしてしまう
+// 						parameters[ep1[j]] = ep2[j]
+// 					}
+// 					if ep1[j] == ep2[j] {
+// 						continue
+// 					}
+// 				}
+// 				return n.leaf.val
+// 			}
+// 			return ""
+// 		}
+
+// 		for i := 0; i < len(n.children); i++ {
+// 			// prefix match
+// 			ncp := n.children[i].node.prefix
+// 			if strings.HasPrefix(path, ncp) {
+// 				path = path[len(ncp):]
+// 				tmpn = n.children[i].node
+// 				tmppx = ncp
+// 			}
+// 			// param match
+// 			if strings.Contains(ncp, ":") {
+// 				cp := longestPrefix(path, ncp)
+
+// 				tmppk := ncp[cp:]
+// 				pki := strings.Index(tmppk, "/")
+// 				pk := tmppk
+// 				if pki > 0 {
+// 					pk = tmppk[:pki]
+// 				}
+
+// 				tmppv := path[cp:]
+// 				pvi := strings.Index(tmppv, "/")
+// 				pv := tmppv
+// 				if pvi > 0 {
+// 					pv = tmppv[:pvi]
+// 				}
+
+// 				// TODO: /foo/:id/:id みたいにするとオーバーライドしてしまう
+// 				parameters[pk] = pv // ex. key :one val one
+
+// 				tmppx = ncp[:cp+len(pk)]
+
+// 				tmpn = n.children[i].node
+// 				if len(n.children[i].node.children) == 0 {
+// 					path = path[cp+len(pv):]
+// 					if path == "" {
+// 						break
+// 					}
+// 					if n.children[i].node.leaf != nil {
+// 						epk := explodePath(n.children[i].node.leaf.key[len(tmppx):])
+// 						epp := explodePath(path)
+// 						if len(epk) != len(epp) {
+// 							return ""
+// 						}
+// 						for j := 0; j < len(epk); j++ {
+// 							if strings.Contains(epk[j], ":") {
+// 								// TODO: /foo/:id/:id みたいにするとオーバーライドしてしまう
+// 								parameters[epk[j]] = epp[j]
+// 							}
+// 							if epk[j] == epp[j] {
+// 								continue
+// 							}
+// 						}
+// 					}
+// 					path = ""
+// 					break
+// 				} else {
+// 					path = path[cp+len(pv)+1:] // 1 is for /
+// 				}
+// 			}
+// 		}
+
+// 		n = tmpn
+
+// 		if n == nil {
+// 			break
+// 		}
+
+// 		// TODO: ここはforの冒頭だけで良い条件かも
+// 		// if len(path) == 0 {
+// 		// 	if n.leaf != nil {
+// 		// 		// fmt.Printf("%#v\n", parameters)
+// 		// 		return n.leaf.val
+// 		// 	}
+// 		// 	break
+// 		// }
+// 	}
+// 	return ""
+// }
 
 func explodePath(path string) []string {
 	splitFn := func(c rune) bool {
